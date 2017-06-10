@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -153,7 +154,8 @@ public class CameraActivity extends AppCompatActivity {
                 Log.d(TAG, "Error accessing file: " + e.getMessage());
             }
 
-            startPreview();
+            //startPreview();
+            Toast.makeText(getApplicationContext(), "Picture taken", Toast.LENGTH_LONG);
         }
     };
 
@@ -182,7 +184,7 @@ public class CameraActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.i("", "onCreate");
+        Log.i(" - - - - - - - - - - - ", "onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
@@ -201,6 +203,7 @@ public class CameraActivity extends AppCompatActivity {
                     public void onClick(View v) {
                         // get an image from the camera
                         mCamera.takePicture(null, null, mPicture);
+                        mPreview.refreshDrawableState();  /// must be something to do here!!
                     }
                 }
         );
