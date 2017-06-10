@@ -62,10 +62,6 @@ public class CameraActivity extends AppCompatActivity {
 
 
 
-
-
-
-
     /** A safe way to get an instance of the Camera object. */
     public static Camera getCameraInstance(){
         Camera c = null;
@@ -77,12 +73,6 @@ public class CameraActivity extends AppCompatActivity {
         }
         return c; // returns null if camera is unavailable
     }
-
-
-
-
-
-
 
 
 
@@ -130,9 +120,6 @@ public class CameraActivity extends AppCompatActivity {
 
 
 
-
-
-
     private Camera.PictureCallback mPicture = new Camera.PictureCallback() {
 
         @Override
@@ -155,13 +142,11 @@ public class CameraActivity extends AppCompatActivity {
             }
 
             //startPreview();
-            Toast.makeText(getApplicationContext(), "Picture taken", Toast.LENGTH_LONG);
+            Log.i(" - - - - - - - - - - - ", "Picture taken");
+            Toast.makeText(CameraActivity.this, "Picture taken", Toast.LENGTH_SHORT).show();
+            mCamera.startPreview();
         }
     };
-
-
-
-
 
 
 
@@ -176,9 +161,6 @@ public class CameraActivity extends AppCompatActivity {
         preview.addView(mPreview);
 
     }
-
-
-
 
 
 
@@ -203,7 +185,6 @@ public class CameraActivity extends AppCompatActivity {
                     public void onClick(View v) {
                         // get an image from the camera
                         mCamera.takePicture(null, null, mPicture);
-                        mPreview.refreshDrawableState();  /// must be something to do here!!
                     }
                 }
         );
