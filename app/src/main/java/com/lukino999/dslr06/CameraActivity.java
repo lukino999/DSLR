@@ -2,6 +2,9 @@ package com.lukino999.dslr06;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Application;
+import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.net.Uri;
@@ -24,6 +27,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import static android.R.attr.priority;
 import static android.content.ContentValues.TAG;
 
 import static android.R.attr.id;
@@ -34,8 +38,7 @@ public class CameraActivity extends AppCompatActivity {
 
     private static final int MY_PERMISSIONS_REQUEST_CAMERA = 1001;
     private static final int MY_PERMISSIONS_WRITE_EXTERNAL_STORAGE = 1002;
-    private boolean cameraPermissionGranted;
-    private boolean writeExternalStoragePermissionGranted;
+    private static String appName = "DSLR";
 
     // sets fullscreen declarations
     private final Handler mHideHandler = new Handler();
@@ -103,7 +106,7 @@ public class CameraActivity extends AppCompatActivity {
         // using Environment.getExternalStorageState() before doing this.
 
         File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES), "MyCameraApp");
+                Environment.DIRECTORY_PICTURES), appName);
         // This location works best if you want the created images to be shared
         // between applications and persist after your app has been uninstalled.
 
@@ -156,9 +159,8 @@ public class CameraActivity extends AppCompatActivity {
 
             //startPreview();
             Log.i(" - - - - - - - - - - - ", "Picture taken");
-            Toast.makeText(CameraActivity.this, "Picture taken", Toast.LENGTH_SHORT).show();
+            Toast.makeText(CameraActivity.this, "Saved as: " + getOutputMediaFileUri(MEDIA_TYPE_IMAGE), Toast.LENGTH_LONG).show();
             mCamera.startPreview();
-            Toast.makeText(CameraActivity.this, "mCamera.startPreview", Toast.LENGTH_SHORT).show();
         }
     };
 
@@ -289,6 +291,9 @@ public class CameraActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
+        appName = getApplicationInfo().loadLabel(getPackageManager()).toString();
+        Log.i("AppName", appName);
+
         startCamera();
 
         Log.i(" - - - - - - - - - - - ", "end of onCreate");
@@ -296,7 +301,7 @@ public class CameraActivity extends AppCompatActivity {
 
 
 
-    // relese the camera once done
+    // release the camera once done
     private void releaseCamera(){
         if (mCamera != null){
             mCamera.release();        // release the camera for other applications
