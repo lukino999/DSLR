@@ -33,8 +33,11 @@ import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
 public class CameraActivity extends AppCompatActivity {
 
     private static final int MY_PERMISSIONS_REQUEST_CAMERA = 1001;
+    private static final int MY_PERMISSIONS_WRITE_EXTERNAL_STORAGE = 1002;
+    private boolean cameraPermissionGranted;
+    private boolean writeExternalStoragePermissionGranted;
 
-    // sets fullscreen
+    // sets fullscreen declarations
     private final Handler mHideHandler = new Handler();
     private View mContentView;
     private final Runnable mHidePart2Runnable = new Runnable() {
@@ -55,7 +58,11 @@ public class CameraActivity extends AppCompatActivity {
         }
     };
 
-
+    private void setFullscreen(){
+        // makes fullscreen
+        mContentView = findViewById(R.id.fullscreen_content);
+        mHideHandler.post(mHidePart2Runnable);
+    }
 
 
 
@@ -74,6 +81,8 @@ public class CameraActivity extends AppCompatActivity {
         }
         catch (Exception e){
             // Camera is not available (in use or does not exist)
+            Log.i(" - - - - - - - - - - - ", "something wrong opening the camera");
+
         }
         return c; // returns null if camera is unavailable
     }
@@ -160,6 +169,8 @@ public class CameraActivity extends AppCompatActivity {
         // Create an instance of Camera
         mCamera = getCameraInstance();
 
+        System.out.println("mcamera: " + mCamera);
+
         // Create our Preview view and set it as the content of our activity.
         mPreview = new CameraPreview(this, mCamera);
         FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
@@ -167,7 +178,66 @@ public class CameraActivity extends AppCompatActivity {
 
     }
 
+    private void startCamera(){
 
+        if ((ContextCompat.checkSelfPermission(CameraActivity.this,
+                Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) ||
+                (ContextCompat.checkSelfPermission(CameraActivity.this,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)){
+            checkPermissions();
+            return;
+        }
+
+        setFullscreen();
+
+        // Start preview
+        startPreview();
+
+        // Add a listener to the Capture button
+        Button captureButton = (Button) findViewById(R.id.button_capture);
+        captureButton.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        // get an image from the camera
+                        mCamera.takePicture(null, null, mPicture);
+                    }
+                }
+        );
+    }
+
+
+    private void checkPermissions(){
+        /** Beginning in Android 6.0 (API level 23), users grant permissions to apps
+         * while the app is running, not when they install the app.
+         * https://developer.android.com/training/permissions/requesting.html#perm-check */
+
+        if (ContextCompat.checkSelfPermission(CameraActivity.this,
+                Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+
+
+            ActivityCompat.requestPermissions(CameraActivity.this,
+                    new String[]{Manifest.permission.CAMERA},
+                    MY_PERMISSIONS_REQUEST_CAMERA);
+
+            // The callback method gets the result of the request.
+        }
+
+        if (ContextCompat.checkSelfPermission(CameraActivity.this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+
+
+            ActivityCompat.requestPermissions(CameraActivity.this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    MY_PERMISSIONS_WRITE_EXTERNAL_STORAGE);
+
+            // The callback method gets the result of the request.
+        }
+
+
+    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
@@ -178,28 +248,9 @@ public class CameraActivity extends AppCompatActivity {
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-                    // permission was granted, yay! Do the
-                    // task you need to do.
-
-                    // makes fullscreen
-                    mContentView = findViewById(R.id.fullscreen_content);
-                    mHideHandler.post(mHidePart2Runnable);
-
-
-                    startPreview();
-
-                    // Add a listener to the Capture button
-                    Button captureButton = (Button) findViewById(R.id.button_capture);
-                    captureButton.setOnClickListener(
-                            new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    // get an image from the camera
-                                    mCamera.takePicture(null, null, mPicture);
-                                }
-                            }
-                    );
-
+                    // permission was granted
+                    Toast.makeText(this, "Camera permission granted", Toast.LENGTH_SHORT).show();
+                    startCamera();
 
                 } else {
 
@@ -209,9 +260,25 @@ public class CameraActivity extends AppCompatActivity {
                 return;
             }
 
-            // other 'case' lines to check for other
-            // permissions this app might request
+            case MY_PERMISSIONS_WRITE_EXTERNAL_STORAGE: {
+                // If request is cancelled, the result arrays are empty.
+
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted.
+                    Toast.makeText(this, "Writing on storage permission granted", Toast.LENGTH_SHORT).show();
+                    startCamera();
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+            }
+
         }
+
     }
 
 
@@ -222,38 +289,10 @@ public class CameraActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
-        /** Beginning in Android 6.0 (API level 23), users grant permissions to apps while the app is running, not when they install the app. */
-        /** https://developer.android.com/training/permissions/requesting.html#perm-check */
-        /** -------------------------------------------------------------------------------- */
-        if (ContextCompat.checkSelfPermission(CameraActivity.this,
-                Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
+        startCamera();
 
-
-                ActivityCompat.requestPermissions(CameraActivity.this,
-                        new String[]{Manifest.permission.CAMERA},
-                        MY_PERMISSIONS_REQUEST_CAMERA);
-
-                // The callback method gets the result of the request.
-            }
-        }
-        /** -------------------------------------------------------------------------------- */
-
-
-
-
-
+        Log.i(" - - - - - - - - - - - ", "end of onCreate");
     }
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -268,6 +307,18 @@ public class CameraActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+
+        Log.i(" - - - - - - - - - - - ", "onPause");
         releaseCamera();              // release the camera immediately on pause event
     }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+
+        Log.i(" - - - - - - - - - - - ", "onRestart");
+        startCamera();
+    }
+
+
 }
