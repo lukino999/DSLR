@@ -1,10 +1,14 @@
 package com.lukino999.dslr06;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -28,7 +32,7 @@ import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
 @SuppressWarnings("deprecation")
 public class CameraActivity extends AppCompatActivity {
 
-
+    private static final int MY_PERMISSIONS_REQUEST_CAMERA = 1001;
 
     // sets fullscreen
     private final Handler mHideHandler = new Handler();
@@ -145,6 +149,7 @@ public class CameraActivity extends AppCompatActivity {
             Log.i(" - - - - - - - - - - - ", "Picture taken");
             Toast.makeText(CameraActivity.this, "Picture taken", Toast.LENGTH_SHORT).show();
             mCamera.startPreview();
+            Toast.makeText(CameraActivity.this, "mCamera.startPreview", Toast.LENGTH_SHORT).show();
         }
     };
 
@@ -165,29 +170,79 @@ public class CameraActivity extends AppCompatActivity {
 
 
     @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_CAMERA: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // task you need to do.
+
+                    // makes fullscreen
+                    mContentView = findViewById(R.id.fullscreen_content);
+                    mHideHandler.post(mHidePart2Runnable);
+
+
+                    startPreview();
+
+                    // Add a listener to the Capture button
+                    Button captureButton = (Button) findViewById(R.id.button_capture);
+                    captureButton.setOnClickListener(
+                            new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    // get an image from the camera
+                                    mCamera.takePicture(null, null, mPicture);
+                                }
+                            }
+                    );
+
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
+    }
+
+
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.i(" - - - - - - - - - - - ", "onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
-        //makes fullscreen
-        mContentView = findViewById(R.id.fullscreen_content);
-        mHideHandler.post(mHidePart2Runnable);
+        /** Beginning in Android 6.0 (API level 23), users grant permissions to apps while the app is running, not when they install the app. */
+        /** https://developer.android.com/training/permissions/requesting.html#perm-check */
+        /** -------------------------------------------------------------------------------- */
+        if (ContextCompat.checkSelfPermission(CameraActivity.this,
+                Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
 
 
-        startPreview();
+                ActivityCompat.requestPermissions(CameraActivity.this,
+                        new String[]{Manifest.permission.CAMERA},
+                        MY_PERMISSIONS_REQUEST_CAMERA);
 
-        // Add a listener to the Capture button
-        Button captureButton = (Button) findViewById(R.id.button_capture);
-        captureButton.setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        // get an image from the camera
-                        mCamera.takePicture(null, null, mPicture);
-                    }
-                }
-        );
+                // The callback method gets the result of the request.
+            }
+        }
+        /** -------------------------------------------------------------------------------- */
+
+
+
+
+
     }
 
 
