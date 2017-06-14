@@ -11,12 +11,12 @@
     <RelativeLayout
         android:id="@+id/camera_preview"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_toLeftOf="@+id/button_capture"
-        android:layout_toStartOf="@+id/button_capture">
+        android:layout_height="fill_parent">
 
 
     </RelativeLayout>
+
+<!--
 
     <ImageButton
         android:id="@+id/button_capture"
@@ -27,5 +27,7 @@
         android:layout_alignParentRight="true"
         tools:ignore="ContentDescription,RtlHardcoded"
         android:background="#0000"/>
+
+    -->
 
 </RelativeLayout>

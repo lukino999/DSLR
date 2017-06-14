@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:gravity="bottom"
-    >
-    <Button
-        android:id="@+id/takepicture"
+    android:layout_height="fill_parent">
+
+
+    <ImageButton
+        android:id="@+id/button_capture"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text=" * Take Picture "
-        android:layout_gravity="right"
-        android:layout_margin="10px"
+        android:layout_centerVertical="true"
+        android:layout_alignParentRight="true"
+        android:src="@drawable/button_take_picture"
+        tools:ignore="ContentDescription,RtlHardcoded"
+        android:background="#0000"
         />
-</LinearLayout>
+
+
+</RelativeLayout>
