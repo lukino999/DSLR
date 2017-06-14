@@ -1,20 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/fullscreen_content"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:background="#000"
     android:orientation="horizontal">
 
-    <FrameLayout
+    <RelativeLayout
         android:id="@+id/camera_preview"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_weight="1" />
+        android:layout_toLeftOf="@+id/button_capture"
+        android:layout_toStartOf="@+id/button_capture">
 
-    <Button
+
+    </RelativeLayout>
+
+    <ImageButton
         android:id="@+id/button_capture"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="Capture" />
-</LinearLayout>
+        app:srcCompat="@drawable/button_take_picture"
+        android:layout_centerVertical="true"
+        android:layout_alignParentRight="true"
+        tools:ignore="ContentDescription,RtlHardcoded"
+        android:background="#0000"/>
+
+</RelativeLayout>

@@ -2,22 +2,21 @@ package com.lukino999.dslr06;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Application;
-import android.content.Context;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
-import android.widget.FrameLayout;
+import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import java.io.File;
@@ -27,11 +26,9 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import static android.R.attr.priority;
-import static android.content.ContentValues.TAG;
 
-import static android.R.attr.id;
-import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
+
+import static android.content.ContentValues.TAG;
 
 @SuppressWarnings("deprecation")
 public class CameraActivity extends AppCompatActivity {
@@ -73,6 +70,9 @@ public class CameraActivity extends AppCompatActivity {
 
     private Camera mCamera;
     private CameraPreview mPreview;
+
+    // this will be used to inflate an xml to its own View obj
+    LayoutInflater controlInflater = null;
 
 
 
@@ -175,8 +175,17 @@ public class CameraActivity extends AppCompatActivity {
 
         // Create our Preview view and set it as the content of our activity.
         mPreview = new CameraPreview(this, mCamera);
-        FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
+        RelativeLayout preview = (RelativeLayout) findViewById(R.id.camera_preview);
         preview.addView(mPreview);
+
+        //  8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8
+
+        controlInflater = LayoutInflater.from(getBaseContext());
+        View viewControl = controlInflater.inflate(R.layout.control, null);
+        ViewGroup.LayoutParams layoutParamsControl
+                = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
+                ViewGroup.LayoutParams.FILL_PARENT);
+        this.addContentView(viewControl, layoutParamsControl);
 
     }
 
@@ -196,7 +205,7 @@ public class CameraActivity extends AppCompatActivity {
         startPreview();
 
         // Add a listener to the Capture button
-        Button captureButton = (Button) findViewById(R.id.button_capture);
+        ImageButton captureButton = (ImageButton) findViewById(R.id.button_capture);
         captureButton.setOnClickListener(
                 new View.OnClickListener() {
                     @Override

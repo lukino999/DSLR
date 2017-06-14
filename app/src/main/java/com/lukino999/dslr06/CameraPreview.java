@@ -17,9 +17,9 @@ import static android.content.ContentValues.TAG;
 /** A basic Camera preview class */
 @SuppressWarnings("deprecation")
 public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback {
+
     private SurfaceHolder mHolder;
     private Camera mCamera;
-
     public CameraPreview(Context context, Camera camera) {
         super(context);
         mCamera = camera;
