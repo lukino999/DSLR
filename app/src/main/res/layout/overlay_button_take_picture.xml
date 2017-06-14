@@ -13,8 +13,7 @@
         android:layout_alignParentRight="true"
         android:src="@drawable/button_take_picture"
         tools:ignore="ContentDescription,RtlHardcoded"
-        android:background="#0000"
-        />
+        android:background="#0000" />
 
 
 </RelativeLayout>

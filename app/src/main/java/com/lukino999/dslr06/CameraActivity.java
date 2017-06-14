@@ -2,6 +2,7 @@ package com.lukino999.dslr06;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.net.Uri;
@@ -11,12 +12,15 @@ import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.AttributeSet;
 import android.util.Log;
+import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.view.ViewTreeObserver;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
@@ -24,6 +28,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.Policy;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -179,10 +184,14 @@ public class CameraActivity extends AppCompatActivity {
         RelativeLayout preview = (RelativeLayout) findViewById(R.id.camera_preview);
         preview.addView(mPreview);
 
+
+
         //  8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8
 
+
+        // this inflates the overlay_button_take_picture_button_take_picture.xml file to the View viewControl
         controlInflater = LayoutInflater.from(getBaseContext());
-        View viewControl = controlInflater.inflate(R.layout.control, null);
+        View viewControl = controlInflater.inflate(R.layout.overlay_button_take_picture, null);
         ViewGroup.LayoutParams layoutParamsControl
                 = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
                 ViewGroup.LayoutParams.FILL_PARENT);
@@ -205,6 +214,8 @@ public class CameraActivity extends AppCompatActivity {
         // Start preview
         startPreview();
 
+        // TODO get camera capabilities and set format to highest resolution
+
         // Add a listener to the Capture button
         ImageButton captureButton = (ImageButton) findViewById(R.id.button_capture);
         captureButton.setOnClickListener(
@@ -216,6 +227,41 @@ public class CameraActivity extends AppCompatActivity {
                     }
                 }
         );
+    }
+
+    private void initializeCameraPictureSize (){
+
+    }
+
+    private void setPreviewAspectRatio() {
+
+        /* in order to set preview aspect ratio to be the
+         same as camera output format proportions
+        get the format proportions from camera params*/
+
+        float aspectRatio;
+
+        Camera.Size pictureSize = mCamera.getParameters().getPictureSize();
+        System.out.println(pictureSize.width + " X " + pictureSize.height);
+
+        aspectRatio = (float) pictureSize.width / (float) pictureSize.height;
+
+        System.out.println("Aspect Ratio: " + aspectRatio);
+
+        // now set the preview width
+
+        RelativeLayout cameraPreviewLayout = (RelativeLayout) findViewById(R.id.camera_preview);
+        int cameraPreviewHeight = cameraPreviewLayout.getHeight();
+        int cameraPreviewWidth = (int) (cameraPreviewHeight * aspectRatio);
+
+        System.out.println("Preview" + cameraPreviewWidth + "X" + cameraPreviewHeight);
+
+        ViewGroup.LayoutParams params = cameraPreviewLayout.getLayoutParams();
+        params.width = cameraPreviewWidth;
+        cameraPreviewLayout.setLayoutParams(params);
+
+
+
     }
 
 
@@ -306,10 +352,35 @@ public class CameraActivity extends AppCompatActivity {
 
         startCamera();
 
+
+        // listens to layout to be ready before calling the setPreviewAspectRatio
+        final RelativeLayout layout = (RelativeLayout) findViewById(R.id.camera_preview);
+
+
+
+        // add listener for camera_preview to be drawn
+        ViewTreeObserver vto = layout.getViewTreeObserver();
+        vto.addOnGlobalLayoutListener (new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+
+                // remove the listener as you only what this executed once
+                layout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+
+                // set camera_preview aspect ratio
+                setPreviewAspectRatio();
+
+            }
+        });
+
+
+
+
+
+
+
         Log.i(" - - - - - - - - - - - ", "end of onCreate");
     }
-
-
 
     // release the camera once done
     private void releaseCamera(){
