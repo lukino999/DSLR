@@ -83,5 +83,17 @@
         android:layout_alignStart="@+id/button_focus_mode"
         android:layout_marginBottom="5dp"/>
 
+    <Button
+        android:id="@+id/button_iso"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="#afff"
+        android:text="ISO"
+        android:textColor="@color/colorPrimary"
+        android:layout_below="@+id/button_focus_mode"
+        android:layout_alignLeft="@+id/button_focus_mode"
+        android:layout_alignStart="@+id/button_focus_mode"
+        android:layout_marginTop="5dp"/>
+
 
 </RelativeLayout>
