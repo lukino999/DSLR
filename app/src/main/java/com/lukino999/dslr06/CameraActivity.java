@@ -2,9 +2,12 @@ package com.lukino999.dslr06;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
+import android.media.MediaActionSound;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -12,15 +15,16 @@ import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
-import android.util.Size;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
@@ -28,11 +32,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.security.Policy;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
-
-
+import java.util.List;
 
 import static android.content.ContentValues.TAG;
 
@@ -163,8 +166,7 @@ public class CameraActivity extends AppCompatActivity {
                 Log.d(TAG, "Error accessing file: " + e.getMessage());
             }
 
-            //startPreview();
-            Log.i(" - - - - - - - - - - - ", "Picture taken");
+            Log.i(" - - - - - - - - - - - ", "Picture taken " + getOutputMediaFileUri(MEDIA_TYPE_IMAGE));
             Toast.makeText(CameraActivity.this, "Saved as: " + getOutputMediaFileUri(MEDIA_TYPE_IMAGE), Toast.LENGTH_LONG).show();
             mCamera.startPreview();
         }
@@ -181,7 +183,7 @@ public class CameraActivity extends AppCompatActivity {
 
         // Create our Preview view and set it as the content of our activity.
         mPreview = new CameraPreview(this, mCamera);
-        RelativeLayout preview = (RelativeLayout) findViewById(R.id.camera_preview);
+        FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
         preview.addView(mPreview);
 
 
@@ -214,30 +216,18 @@ public class CameraActivity extends AppCompatActivity {
         // Start preview
         startPreview();
 
-        // TODO get camera capabilities and set format to highest resolution
-
-        // Add a listener to the Capture button
-        ImageButton captureButton = (ImageButton) findViewById(R.id.button_capture);
-        captureButton.setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        // get an image from the camera
-                        mCamera.takePicture(null, null, mPicture);
-                    }
-                }
-        );
     }
 
-    private void initializeCameraPictureSize (){
-
-    }
 
     private void setPreviewAspectRatio() {
 
         /* in order to set preview aspect ratio to be the
          same as camera output format proportions
         get the format proportions from camera params*/
+
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int height = displayMetrics.heightPixels;
 
         float aspectRatio;
 
@@ -250,14 +240,15 @@ public class CameraActivity extends AppCompatActivity {
 
         // now set the preview width
 
-        RelativeLayout cameraPreviewLayout = (RelativeLayout) findViewById(R.id.camera_preview);
-        int cameraPreviewHeight = cameraPreviewLayout.getHeight();
-        int cameraPreviewWidth = (int) (cameraPreviewHeight * aspectRatio);
+        FrameLayout cameraPreviewLayout = (FrameLayout) findViewById(R.id.camera_preview);
+        int cameraPreviewHeight = height;
+        int cameraPreviewWidth = (int) (height * aspectRatio);
 
-        System.out.println("Preview" + cameraPreviewWidth + "X" + cameraPreviewHeight);
+        System.out.println("camera_preview size: " + cameraPreviewWidth + " X " + cameraPreviewHeight);
 
         ViewGroup.LayoutParams params = cameraPreviewLayout.getLayoutParams();
         params.width = cameraPreviewWidth;
+        params.height = cameraPreviewHeight;
         cameraPreviewLayout.setLayoutParams(params);
 
 
@@ -354,11 +345,11 @@ public class CameraActivity extends AppCompatActivity {
 
 
         // listens to layout to be ready before calling the setPreviewAspectRatio
-        final RelativeLayout layout = (RelativeLayout) findViewById(R.id.camera_preview);
+        final FrameLayout layout = (FrameLayout) findViewById(R.id.camera_preview);
 
 
 
-        // add listener for camera_preview to be drawn
+        // add listener for camera_preview to be drawn, then call the setPreviewAspectRatio()
         ViewTreeObserver vto = layout.getViewTreeObserver();
         vto.addOnGlobalLayoutListener (new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
@@ -370,19 +361,19 @@ public class CameraActivity extends AppCompatActivity {
                 // set camera_preview aspect ratio
                 setPreviewAspectRatio();
 
+                // sets the user interface functionality
+                setListeners();
+
             }
         });
-
-
-
-
-
-
-
         Log.i(" - - - - - - - - - - - ", "end of onCreate");
     }
 
-    // release the camera once done
+
+
+
+
+    // release the camera once done ----------------------------------------------------------------
     private void releaseCamera(){
         if (mCamera != null){
             mCamera.release();        // release the camera for other applications
@@ -405,6 +396,221 @@ public class CameraActivity extends AppCompatActivity {
         Log.i(" - - - - - - - - - - - ", "onRestart");
         startCamera();
     }
+    // ---------------------------------------------------------------------------------------------
+
+
+
+
+
+    // set Listeners -------------------------------------------------------------------------------
+
+
+    // define buttons clicked state
+    boolean isButtonFocusModeClicked = false;
+
+    int focusAreaSize = 100;
+
+
+
+
+    MediaActionSound onFocusSound =  new MediaActionSound();
+
+
+    Camera.AutoFocusCallback autoFocusCallback = new Camera.AutoFocusCallback() {
+        @Override
+        public void onAutoFocus(boolean success, Camera camera) {
+            System.out.println("Autofocus success: " + success);
+            float focusDistance[] = new float[3];
+            if (success) {
+                onFocusSound.play(MediaActionSound.START_VIDEO_RECORDING);
+                mCamera.getParameters().getFocusDistances(focusDistance);
+                for (float fd : focusDistance){
+                    System.out.println(fd);
+                }
+            } else {
+                Toast.makeText(CameraActivity.this, "Unable to focus", Toast.LENGTH_SHORT).show();
+
+            }
+        }
+    };
+
+
+    private void setListeners(){
+
+        final Camera.Parameters mCameraParameters = mCamera.getParameters();
+        System.out.println(mCameraParameters.getSupportedFocusModes());
+        System.out.println("Focus mode set to: " + mCameraParameters.getFocusMode());
+        System.out.println("Scene mode set to: " + mCameraParameters.getSceneMode());
+
+
+
+        // Add a listener to the button_capture
+        ImageButton buttonCapture = (ImageButton) findViewById(R.id.button_capture);
+        buttonCapture.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        // get an image from the camera
+                        mCamera.takePicture(null, null, mPicture);
+
+                    }
+                }
+        );
+
+
+
+        // Add listener to button_focus_mode
+        final RelativeLayout menuFocusMode = (RelativeLayout) findViewById(R.id.menu_focus_mode);
+        menuFocusMode.setVisibility(View.INVISIBLE);
+        final Button buttonFocusMode = (Button) findViewById(R.id.button_focus_mode);
+        buttonFocusMode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isButtonFocusModeClicked){
+                    // menu is visible. Toggle it off
+                    menuFocusMode.setVisibility(View.INVISIBLE);
+                    isButtonFocusModeClicked = false;
+                } else {
+                    // menu is invisible. Toggle it on
+                    menuFocusMode.setVisibility(View.VISIBLE);
+                    isButtonFocusModeClicked = true;
+                }
+            }
+        });
+
+
+
+        // set button_focus_mode_macro if supported
+        if (mCameraParameters.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_MACRO)){
+            System.out.println("Macro supported");
+            Button buttonFocusModeMacro = (Button) findViewById(R.id.button_focus_mode_macro);
+            buttonFocusModeMacro.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    System.out.println("Macro");
+                    mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
+                    mCamera.setParameters(mCameraParameters);
+                    onFocusSound.load(MediaActionSound.START_VIDEO_RECORDING); // preload the sample
+                    mCamera.autoFocus(autoFocusCallback);
+                }
+            });
+        }
+
+
+
+        // set button_focus_mode_inf if supported. Do not call autofocus in this mode
+        if (mCameraParameters.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_INFINITY)){
+            System.out.println("Infinity supported");
+            Button buttonFocusModeInf = (Button) findViewById(R.id.button_focus_mode_inf);
+            buttonFocusModeInf.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    System.out.println("Inf");
+                    mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY);
+                    mCamera.setParameters(mCameraParameters);
+                }
+            });
+        }
+
+
+
+        // set button_focus_mode_auto
+        if (mCameraParameters.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO)){
+            Button buttonFocusModeAuto = (Button) findViewById(R.id.button_focus_mode_auto);
+            buttonFocusModeAuto.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    System.out.println("Auto");
+                    mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+                    mCamera.setParameters(mCameraParameters);
+                    onFocusSound.load(MediaActionSound.START_VIDEO_RECORDING); // preload the sample
+                    mCamera.autoFocus(autoFocusCallback);
+                }
+            });
+        }
+
+        System.out.println(mCameraParameters.getSupportedSceneModes());
+
+
+
+        // set camera_preview OnTouchListener
+        FrameLayout cameraPreview = (FrameLayout) findViewById(R.id.camera_preview);
+        cameraPreview.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+
+                // only available in
+                /*The Rect field in a Camera.Area object describes a
+                rectangular shape mapped on a 2000 x 2000 unit grid.
+                The coordinates -1000, -1000 represent the top, left corner of the camera image,
+                and coordinates 1000, 1000 represent the bottom,
+                right corner of the camera image, as shown in the illustration below.
+                https://developer.android.com/guide/topics/media/images/camera-area-coordinates.png
+                 */
+                int x1000 = (int) ((event.getX() / v.getWidth() * 2000)-1000);
+                int y1000 = (int) ((event.getY() / v.getHeight() * 2000)-1000);
+
+                System.out.println("getX, getY: " + event.getX() + ", " + event.getY());
+                System.out.println("x1000, y1000: " + x1000 + ", " + y1000);
+
+                // TODO make sure the rect it's inside the allowed range
+                Rect focusAreaRect = new Rect(x1000-focusAreaSize/2, y1000-focusAreaSize/2,
+                                                x1000+focusAreaSize/2, y1000+focusAreaSize/2);
+
+
+                List<Camera.Area> focusAreasList = new ArrayList<>();
+                focusAreasList.add(new Camera.Area(focusAreaRect, 1000));
+                System.out.println(focusAreasList);
+
+
+                mCameraParameters.setMeteringAreas(focusAreasList);
+                mCameraParameters.setFocusAreas(focusAreasList);
+
+
+                /*
+                System.out.println("Max meter areas: " + mCameraParameters.getMaxNumMeteringAreas());
+                System.out.println(mCameraParameters.getMeteringAreas());
+                System.out.println("Max focus areas: " + mCameraParameters.getMaxNumFocusAreas());
+                System.out.println(mCameraParameters.getFocusAreas());
+*/
+
+
+                mCamera.setParameters(mCameraParameters);
+
+                //TODO figure out this || statement
+                if ((mCameraParameters.getFocusMode() == Camera.Parameters.FOCUS_MODE_AUTO) || (mCameraParameters.getFocusMode() == Camera.Parameters.FOCUS_MODE_MACRO)){
+                    mCamera.autoFocus(autoFocusCallback);
+                }
+
+                return false;
+            }
+        });
+
+        Button buttonTest = (Button) findViewById(R.id.button_test);
+        buttonTest.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                System.out.println("Max meter areas: " + mCameraParameters.getMaxNumMeteringAreas());
+                System.out.println(mCameraParameters.getMeteringAreas());
+                System.out.println("Max focus areas: " + mCameraParameters.getMaxNumFocusAreas());
+                System.out.println(mCameraParameters.getFocusAreas());
+                System.out.println("Focus mode: " + mCameraParameters.getFocusMode());
+
+
+                if ((mCameraParameters.getFocusMode() == Camera.Parameters.FOCUS_MODE_AUTO) || (mCameraParameters.getFocusMode() == Camera.Parameters.FOCUS_MODE_MACRO)){
+                    System.out.println("Either autofocus or macro");
+                    //mCamera.autoFocus(autoFocusCallback);
+                }
+            }
+        });
+
+
+
+
+        // end of set listeners --------------------------------------------------------------------
+    }
+
+
 
 
 }
