@@ -36,7 +36,8 @@
         android:layout_width="200dp"
         android:layout_height="50dp"
         android:layout_toRightOf="@id/button_focus_mode"
-        android:layout_alignBottom="@id/button_focus_mode">
+        android:layout_alignBottom="@id/button_focus_mode"
+        android:visibility="invisible">
         <Button
             android:id="@+id/button_focus_mode_auto"
             android:layout_width="50dp"
@@ -73,27 +74,49 @@
     </RelativeLayout>
 
     <Button
-        android:id="@+id/button_test"
+        android:id="@+id/button_test_1"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:background="#afff"
-        android:text="Test"
-        android:layout_above="@+id/button_focus_mode"
-        android:layout_alignLeft="@+id/button_focus_mode"
-        android:layout_alignStart="@+id/button_focus_mode"
-        android:layout_marginBottom="5dp"/>
+        android:text="TEST"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginRight="5dp"/>
 
     <Button
-        android:id="@+id/button_iso"
+        android:id="@+id/button_test_2"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:background="#afff"
-        android:text="ISO"
+        android:text="Get ISO"
+        android:layout_alignParentTop="true"
+        android:layout_toLeftOf="@+id/button_test_1"
+        android:layout_toStartOf="@+id/button_test_1"
+        android:layout_marginRight="5dp"/>
+
+
+    <Button
+        android:id="@+id/button_scene_mode"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="#afff"
+        android:text="Scene\nMode"
         android:textColor="@color/colorPrimary"
         android:layout_below="@+id/button_focus_mode"
         android:layout_alignLeft="@+id/button_focus_mode"
         android:layout_alignStart="@+id/button_focus_mode"
         android:layout_marginTop="5dp"/>
+
+    <Spinner
+        android:id="@+id/spinner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/colorPrimary"
+        android:background="#afff"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:visibility="invisible"></Spinner>
 
 
 </RelativeLayout>

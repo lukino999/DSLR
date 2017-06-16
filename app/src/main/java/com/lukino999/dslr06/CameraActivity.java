@@ -1,12 +1,9 @@
 package com.lukino999.dslr06;
 
 import android.Manifest;
-import android.animation.Animator;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
-import android.content.res.ColorStateList;
 import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
 import android.media.MediaActionSound;
 import android.net.Uri;
@@ -23,10 +20,13 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import java.io.File;
@@ -35,8 +35,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import static android.content.ContentValues.TAG;
 
@@ -72,6 +74,7 @@ public class CameraActivity extends AppCompatActivity {
         // makes fullscreen
         mContentView = findViewById(R.id.fullscreen_content);
         mHideHandler.post(mHidePart2Runnable);
+        System.out.println("SetFullscreen");
     }
 
 
@@ -176,6 +179,12 @@ public class CameraActivity extends AppCompatActivity {
 
 
     private void startPreview(){
+
+        /** as I am working on the UI, the camera is getting too hot
+         *  therefore Im returning from this method straight away
+         *  TODO Remove the return in order to have a preview
+         */
+
 
         // Create an instance of Camera
         mCamera = getCameraInstance();
@@ -408,10 +417,14 @@ public class CameraActivity extends AppCompatActivity {
 
     // define buttons clicked state
     boolean isButtonFocusModeClicked = false;
+    boolean isSpinnerVisible = false;
+    public boolean hasSpinnerJustBeenFired = true;
+    private View whoIsUsingTheSpinner;
+
 
     int focusAreaSize = 100;
 
-    MyAnimation animator = new MyAnimation();
+    MyAnimator animator = new MyAnimator();
 
 
     MediaActionSound onFocusSound =  new MediaActionSound();
@@ -439,6 +452,32 @@ public class CameraActivity extends AppCompatActivity {
     private void setListeners(){
 
         final Camera.Parameters mCameraParameters = mCamera.getParameters();
+        final Spinner spinner = (Spinner) findViewById(R.id.spinner);
+
+        spinner.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                setFullscreen();
+                return false;
+            }
+        });
+
+        spinner.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                setFullscreen();
+            }
+        });
+
+
+
+        /*
+        When it statrt in AUTO the autoFocus doesnt seem to work
+        Camera is very hot though. Check again with cool phone
+         */
+        mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
+        mCamera.setParameters(mCameraParameters);
+
 
 
         // Add a listener to the button_capture
@@ -458,7 +497,6 @@ public class CameraActivity extends AppCompatActivity {
 
         // Add listener to button_focus_mode
         final RelativeLayout menuFocusMode = (RelativeLayout) findViewById(R.id.menu_focus_mode);
-        menuFocusMode.setVisibility(View.INVISIBLE);
         final Button buttonFocusMode = (Button) findViewById(R.id.button_focus_mode);
         if (mCameraParameters.getFocusMode() == Camera.Parameters.FOCUS_MODE_INFINITY){
             buttonFocusMode.setText("INF");
@@ -588,20 +626,170 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
 
+/*
 
-        // test button
-        Button buttonTest = (Button) findViewById(R.id.button_test);
+        // button_test
+        Button buttonTest = (Button) findViewById(R.id.button_test_1);
         buttonTest.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // code to test here
-                System.out.println(mCameraParameters.flatten().replace(";", "\n"));
+                */
+/** code to test here **//*
+
+
+
+                // get the iso_values as string[]
+                final String[] iso_values = mCameraParameters.get("iso-values").split(",");
+                //convert it to ArrayList
+                final ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(iso_values));
+                // fill the spinner
+                fillTheSpinner(arrayList);
+                animator.fadeIn(spinner);
+                // set a onItemClickListener for the spinner
+                spinner.setOnItemSelectedListener(null);
+                hasSpinnerJustBeenFired = true;
+                spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                        if (hasSpinnerJustBeenFired){
+                            hasSpinnerJustBeenFired = false;
+                        }   else {
+                            String selection = iso_values[position];
+                            System.out.println("selection: " + selection);
+                        }
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {
+
+                    }
+                });
+
+            }
+        });
+*/
+
+
+
+
+
+
+        // button_test2
+        Button buttonGetIso = (Button) findViewById(R.id.button_test_2);
+        buttonGetIso.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isSpinnerVisible && (whoIsUsingTheSpinner == v)) {
+                    // toggle OFF
+                    animator.fadeOut(spinner);
+                    isSpinnerVisible = false;
+                    whoIsUsingTheSpinner = null;
+                    setFullscreen();
+                } else {
+                    // toggle ON
+                    whoIsUsingTheSpinner = v;
+                    isSpinnerVisible = true;
+                    // get the iso_values as string[]
+                    final String[] iso_values = mCameraParameters.get("iso-values").split(",");
+                    //convert it to ArrayList
+                    final ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(iso_values));
+                    // fill the spinner
+                    fillTheSpinner(arrayList);
+                    // select from spinner to match current value
+                    String currentValueString = mCameraParameters.get("iso");
+                    //int currentValueInt = Arrays.binarySearch(iso_values, currentValueString);
+                    int currentValueInt = arrayList.indexOf(currentValueString);
+                    System.out.println("currentValueString " + currentValueString + "   -   currentValueInt: " + currentValueInt);
+                    spinner.setSelection(currentValueInt, true);
+                    // show the spinner
+                    animator.fadeIn(spinner);
+                    // set a onItemSelectListener for the spinner
+                    spinner.setOnItemSelectedListener(null);
+                    hasSpinnerJustBeenFired = true;
+                    spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                        @Override
+                        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                            if (hasSpinnerJustBeenFired){
+                                hasSpinnerJustBeenFired = false;
+                            }   else {
+                                String selection = iso_values[position];
+                                mCameraParameters.set("iso", iso_values[position]);
+                                mCamera.setParameters(mCameraParameters);
+                                setFullscreen();
+                            }
+                        }
+
+                        @Override
+                        public void onNothingSelected(AdapterView<?> parent) {
+
+                        }
+                    });
+
+                }
+            }
+        });
+
+
+
+
+
+
+        // button_scene_mode
+        Button buttonSceneMode = (Button) findViewById(R.id.button_scene_mode);
+        buttonSceneMode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isSpinnerVisible && (whoIsUsingTheSpinner == v)) {
+                    // toggle OFF
+                    animator.fadeOut(spinner);
+                    isSpinnerVisible = false;
+                    whoIsUsingTheSpinner = null;
+                    setFullscreen();
+                } else {
+                    // toggle ON
+                    whoIsUsingTheSpinner = v;
+                    ArrayList<String> supportedSceneModes = (ArrayList<String>) mCameraParameters.getSupportedSceneModes();
+                    // spinner.setAdapter(null); // TODO do I need to empty the spinner before loading it?
+                    fillTheSpinner(supportedSceneModes);
+                    animator.fadeIn(spinner);
+                    isSpinnerVisible = true;
+                    spinner.setOnItemSelectedListener(null);
+                    hasSpinnerJustBeenFired = true;
+                    spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                        @Override
+                        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                            if (hasSpinnerJustBeenFired){
+                                hasSpinnerJustBeenFired = false;
+                            } else {
+                                System.out.println("Scene nr " + position);
+                            }
+
+                        }
+
+                        @Override
+                        public void onNothingSelected(AdapterView<?> parent) {
+                            System.out.println("No scene selected");
+                        }
+                    });
+                }
 
             }
         });
 
 
+
+
+
+
         // end of set listeners --------------------------------------------------------------------
+    }
+
+    private void fillTheSpinner(ArrayList<String> arrayList){
+
+        Spinner spinner = (Spinner) findViewById(R.id.spinner);
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, arrayList);
+        spinner.setAdapter(arrayAdapter);
+
     }
 
 
