@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.provider.ContactsContract;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -27,6 +28,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -48,6 +50,8 @@ public class CameraActivity extends AppCompatActivity {
     private static final int MY_PERMISSIONS_REQUEST_CAMERA = 1001;
     private static final int MY_PERMISSIONS_WRITE_EXTERNAL_STORAGE = 1002;
     private static String appName = "DSLR";
+
+    MediaActionSound mediaActionSound =  new MediaActionSound();
 
     // sets fullscreen declarations
     private final Handler mHideHandler = new Handler();
@@ -147,13 +151,14 @@ public class CameraActivity extends AppCompatActivity {
         return mediaFile;
     }
 
-
+    private boolean isPictureSequenceEnabled = false;
 
     private Camera.PictureCallback mPicture = new Camera.PictureCallback() {
 
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
 
+            mediaActionSound.play(MediaActionSound.SHUTTER_CLICK);
             File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
             if (pictureFile == null){
                 Log.d(TAG, "Error creating media file, check storage permissions: ");  //e.getMessage();
@@ -173,6 +178,25 @@ public class CameraActivity extends AppCompatActivity {
             Log.i(" - - - - - - - - - - - ", "Picture taken " + getOutputMediaFileUri(MEDIA_TYPE_IMAGE));
             Toast.makeText(CameraActivity.this, "Saved as: " + getOutputMediaFileUri(MEDIA_TYPE_IMAGE), Toast.LENGTH_LONG).show();
             mCamera.startPreview();
+
+            Button buttonHowManyPictures = (Button) findViewById(R.id.button_howManyPictures);
+            //ImageButton buttonCapture = (ImageButton) findViewById(R.id.button_capture);
+            // check whether is picture sequence
+            if (isPictureSequenceEnabled) {
+
+                // get how many pictures left to take
+                int picturesLeftToTake = Integer.parseInt(buttonHowManyPictures.getText().toString());
+                System.out.println("Pictures left: " + picturesLeftToTake);
+
+               if (picturesLeftToTake > 0){
+                    //buttonCapture.performClick();
+                   takePicture();
+                    picturesLeftToTake--;
+                    //set pictureLeftToTake
+                    buttonHowManyPictures.setText(String.valueOf(picturesLeftToTake));
+                }
+            }
+
         }
     };
 
@@ -427,7 +451,6 @@ public class CameraActivity extends AppCompatActivity {
     MyAnimator animator = new MyAnimator();
 
 
-    MediaActionSound onFocusSound =  new MediaActionSound();
 
 
     Camera.AutoFocusCallback autoFocusCallback = new Camera.AutoFocusCallback() {
@@ -436,7 +459,7 @@ public class CameraActivity extends AppCompatActivity {
             System.out.println("Autofocus success: " + success);
             float focusDistance[] = new float[3];
             if (success) {
-                onFocusSound.play(MediaActionSound.START_VIDEO_RECORDING);
+                mediaActionSound.play(MediaActionSound.START_VIDEO_RECORDING);
                 mCamera.getParameters().getFocusDistances(focusDistance);
                 for (float fd : focusDistance){
                     System.out.println(fd);
@@ -457,7 +480,7 @@ public class CameraActivity extends AppCompatActivity {
 
 
         /*
-        When it statrt in AUTO the autoFocus doesnt seem to work
+        When it starts in AUTO the autoFocus doesnt seem to work
         Camera is very hot though. Check again with cool phone
          */
         mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
@@ -466,17 +489,31 @@ public class CameraActivity extends AppCompatActivity {
 
 
         // Add a listener to the button_capture
+
+
         ImageButton buttonCapture = (ImageButton) findViewById(R.id.button_capture);
         buttonCapture.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        // get an image from the camera
-                        mCamera.takePicture(null, null, mPicture);
+                        isPictureSequenceEnabled = false;
+                        takePicture();
 
                     }
                 }
         );
+
+        buttonCapture.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                System.out.println("OnLongClick");
+                countDown();
+
+                return true;
+            }
+        });
+
+
 
 
 
@@ -516,7 +553,7 @@ public class CameraActivity extends AppCompatActivity {
                     mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
                     mCamera.setParameters(mCameraParameters);
                     buttonFocusMode.setText(mCameraParameters.getFocusMode().toUpperCase());
-                    onFocusSound.load(MediaActionSound.START_VIDEO_RECORDING); // preload the sample
+                    mediaActionSound.load(MediaActionSound.START_VIDEO_RECORDING); // preload the sample
                     mCamera.autoFocus(autoFocusCallback);
                     // menu is visible. Toggle it off
                     menuFocusMode.setVisibility(View.INVISIBLE);
@@ -556,7 +593,7 @@ public class CameraActivity extends AppCompatActivity {
                     System.out.println("Auto");
                     mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
                     mCamera.setParameters(mCameraParameters);
-                    onFocusSound.load(MediaActionSound.START_VIDEO_RECORDING); // preload the sample
+                    mediaActionSound.load(MediaActionSound.START_VIDEO_RECORDING); // preload the sample
                     mCamera.autoFocus(autoFocusCallback);
                     buttonFocusMode.setText(mCameraParameters.getFocusMode().toUpperCase());
                     // menu is visible. Toggle it off
@@ -733,11 +770,24 @@ public class CameraActivity extends AppCompatActivity {
         });
 
 
+        final Button buttonZSL = (Button) findViewById(R.id.button_zsl);
+        buttonZSL.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
 
+            }
+        });
 
 
 
         // end of set listeners --------------------------------------------------------------------
+    }
+
+    private void takePicture() {
+        // load sound
+        mediaActionSound.load(MediaActionSound.SHUTTER_CLICK);
+        // get an image from the camera
+        mCamera.takePicture(null, null, mPicture);
     }
 
     private void fillTheSpinner(ArrayList<String> arrayList){
@@ -748,7 +798,77 @@ public class CameraActivity extends AppCompatActivity {
 
     }
 
+    private int countDown = 3;
+    private void countDown(){
 
+        final TextView textViewCentral = (TextView) findViewById(R.id.text_view_central);
+
+        final Handler h = new Handler();
+        final Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                textViewCentral.setText(String.valueOf(countDown));
+                if (countDown > 0) {
+                    System.out.println("Countdown: " + countDown);
+                    countDown--;
+                    h.postDelayed(this, 1000);
+                } else {
+                    System.out.println("TimeOver");
+                    animator.fadeOut(textViewCentral);
+                    countDown = 3;
+                    /*
+                    after countdown, take as many picture as it says
+                    on button_howManyPictures.getText
+                     */
+
+                    // get sequence of pictures
+                    isPictureSequenceEnabled = true;
+                    takePicture();
+
+                }
+            }
+
+
+        };
+
+        animator.fadeIn(textViewCentral);
+        h.post(r);
+    }
+
+    private void getSequenceOfPictures() {
+        /*
+        https://stackoverflow.com/questions/18249554/android-view-performclick-and-callonclick-difference
+
+
+        public boolean performClick ()
+        Added in API level 1
+        Call this view's OnClickListener, if it is defined.
+        Performs all normal actions associated with clicking:
+        reporting accessibility event, playing a sound, etc.
+
+
+        public boolean callOnClick ()
+        Added in API level 15
+        Directly call any attached OnClickListener.
+        Unlike performClick(), this only calls the listener,
+        and does not do any associated clicking actions like
+        reporting an accessibility event.
+         */
+
+        Button buttonHowManyPictures = (Button) findViewById(R.id.button_howManyPictures);
+        int picturesLeftToTake = Integer.parseInt(buttonHowManyPictures.getText().toString());
+        System.out.println("Pictures left: " + picturesLeftToTake);
+
+        ImageButton buttonCapture = (ImageButton) findViewById(R.id.button_capture);
+        while (picturesLeftToTake > 0){
+            buttonCapture.performClick();
+            picturesLeftToTake--;
+            buttonHowManyPictures.setText(String.valueOf(picturesLeftToTake));
+        }
+
+
+
+    }
 
 
 }
