@@ -454,21 +454,6 @@ public class CameraActivity extends AppCompatActivity {
         final Camera.Parameters mCameraParameters = mCamera.getParameters();
         final Spinner spinner = (Spinner) findViewById(R.id.spinner);
 
-        spinner.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                setFullscreen();
-                return false;
-            }
-        });
-
-        spinner.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                setFullscreen();
-            }
-        });
-
 
 
         /*
@@ -583,7 +568,7 @@ public class CameraActivity extends AppCompatActivity {
 
 
 
-        // set camera_preview OnTouchListener
+        // focus touching the preview
         FrameLayout cameraPreview = (FrameLayout) findViewById(R.id.camera_preview);
         cameraPreview.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -626,56 +611,14 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
 
-/*
-
-        // button_test
-        Button buttonTest = (Button) findViewById(R.id.button_test_1);
-        buttonTest.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                */
-/** code to test here **//*
-
-
-
-                // get the iso_values as string[]
-                final String[] iso_values = mCameraParameters.get("iso-values").split(",");
-                //convert it to ArrayList
-                final ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(iso_values));
-                // fill the spinner
-                fillTheSpinner(arrayList);
-                animator.fadeIn(spinner);
-                // set a onItemClickListener for the spinner
-                spinner.setOnItemSelectedListener(null);
-                hasSpinnerJustBeenFired = true;
-                spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                    @Override
-                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                        if (hasSpinnerJustBeenFired){
-                            hasSpinnerJustBeenFired = false;
-                        }   else {
-                            String selection = iso_values[position];
-                            System.out.println("selection: " + selection);
-                        }
-                    }
-
-                    @Override
-                    public void onNothingSelected(AdapterView<?> parent) {
-
-                    }
-                });
-
-            }
-        });
-*/
 
 
 
 
 
 
-        // button_test2
-        Button buttonGetIso = (Button) findViewById(R.id.button_test_2);
+        // button_iso
+        Button buttonGetIso = (Button) findViewById(R.id.button_iso);
         buttonGetIso.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -689,35 +632,38 @@ public class CameraActivity extends AppCompatActivity {
                     // toggle ON
                     whoIsUsingTheSpinner = v;
                     isSpinnerVisible = true;
+
+
                     // get the iso_values as string[]
                     final String[] iso_values = mCameraParameters.get("iso-values").split(",");
                     //convert it to ArrayList
                     final ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(iso_values));
                     // fill the spinner
                     fillTheSpinner(arrayList);
-                    // select from spinner to match current value
+
                     String currentValueString = mCameraParameters.get("iso");
-                    //int currentValueInt = Arrays.binarySearch(iso_values, currentValueString);
+                    //find current value index
                     int currentValueInt = arrayList.indexOf(currentValueString);
                     System.out.println("currentValueString " + currentValueString + "   -   currentValueInt: " + currentValueInt);
+                    // select from spinner to match current value
                     spinner.setSelection(currentValueInt, true);
+
                     // show the spinner
                     animator.fadeIn(spinner);
+
                     // set a onItemSelectListener for the spinner
-                    spinner.setOnItemSelectedListener(null);
-                    hasSpinnerJustBeenFired = true;
+                    spinner.setOnItemSelectedListener(null); // null the listener in case it's already assigned
                     spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                         @Override
                         public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                            if (hasSpinnerJustBeenFired){
-                                hasSpinnerJustBeenFired = false;
-                            }   else {
-                                String selection = iso_values[position];
-                                mCameraParameters.set("iso", iso_values[position]);
-                                mCamera.setParameters(mCameraParameters);
-                                setFullscreen();
-                            }
+
+                            mCameraParameters.set("iso", iso_values[position]);
+                            mCamera.setParameters(mCameraParameters);
+                            setFullscreen();
+
                         }
+
+
 
                         @Override
                         public void onNothingSelected(AdapterView<?> parent) {
@@ -748,22 +694,32 @@ public class CameraActivity extends AppCompatActivity {
                 } else {
                     // toggle ON
                     whoIsUsingTheSpinner = v;
-                    ArrayList<String> supportedSceneModes = (ArrayList<String>) mCameraParameters.getSupportedSceneModes();
-                    // spinner.setAdapter(null); // TODO do I need to empty the spinner before loading it?
-                    fillTheSpinner(supportedSceneModes);
-                    animator.fadeIn(spinner);
                     isSpinnerVisible = true;
+
+
+                    // get the iso_values as string[]
+                    final String[] supportedSceneModeValues = mCameraParameters.get("scene-mode-values").split(",");
+                    //convert it to ArrayList
+                    final ArrayList<String> sceneModesValues= new ArrayList<>(Arrays.asList(supportedSceneModeValues));
+                    // fill the spinner
+                    fillTheSpinner(sceneModesValues);
+
+                    //get current value index
+                    int currentValueIndex = sceneModesValues.indexOf(mCameraParameters.get("scene-mode"));
+
+                    // set spinner to current value
+                    spinner.setSelection(currentValueIndex, false);
+
+                    animator.fadeIn(spinner);
                     spinner.setOnItemSelectedListener(null);
-                    hasSpinnerJustBeenFired = true;
+                    //hasSpinnerJustBeenFired = true;
                     spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                         @Override
                         public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                            if (hasSpinnerJustBeenFired){
-                                hasSpinnerJustBeenFired = false;
-                            } else {
-                                System.out.println("Scene nr " + position);
-                            }
-
+                            mCameraParameters.set("scene-mode", supportedSceneModeValues[position]);
+                            mCamera.setParameters(mCameraParameters);
+                            setFullscreen();
+                            System.out.println("Scene set to: " + mCameraParameters.get("scene-mode"));
                         }
 
                         @Override
