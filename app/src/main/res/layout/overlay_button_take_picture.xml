@@ -4,13 +4,54 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
 
-    <FrameLayout
-        android:id="@+id/frame_shutter"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#fff"
-        android:visibility="invisible">
-    </FrameLayout>
+    <TextView
+        android:id="@+id/text_view_zoom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TempTextView"
+        android:layout_below="@+id/menu_zoom"
+        android:layout_centerHorizontal="true"
+        android:visibility="invisible"/>
+
+
+
+    <RelativeLayout
+        android:id="@+id/menu_zoom"
+        android:layout_width="400dp"
+        android:layout_height="50dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="5dp">
+
+
+        <Button
+            android:id="@+id/button_zoom_plus"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="#afff"
+            android:text="+"
+            android:textColor="@color/colorPrimary"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"/>
+
+        <Button
+            android:id="@+id/button_zoom_minus"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="#afff"
+            android:text="-"
+            android:textColor="@color/colorPrimary"
+            android:layout_alignParentBottom="true"/>
+
+        <SeekBar
+            android:id="@+id/seekbar_zoom"
+            android:layout_width="300dp"
+            android:layout_height="50dp"
+            android:layout_toEndOf="@id/button_zoom_minus"
+            android:layout_toRightOf="@id/button_zoom_minus"
+            />
+
+
+    </RelativeLayout>
 
     <RelativeLayout
         android:id="@+id/menu_picture_count"
@@ -64,7 +105,7 @@
         android:layout_alignBottom="@+id/button_flash_mode"
         android:layout_toRightOf="@+id/button_flash_mode"
         android:layout_marginLeft="5dp"
-        >
+        android:visibility="invisible">
         <Button
             android:id="@+id/button_flash_auto"
             android:layout_width="50dp"

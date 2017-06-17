@@ -26,6 +26,7 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -158,9 +159,10 @@ public class CameraActivity extends AppCompatActivity {
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
 
-            FrameLayout frameShutter = (FrameLayout) findViewById(R.id.frame_shutter);
-            mediaActionSound.play(MediaActionSound.SHUTTER_CLICK);
+            // shutter animation
+            FrameLayout frameShutter = (FrameLayout) findViewById(R.id.camera_preview);
             animator.shutterAnimation(frameShutter);
+
             File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
             if (pictureFile == null){
                 Log.d(TAG, "Error creating media file, check storage permissions: ");  //e.getMessage();
@@ -178,7 +180,7 @@ public class CameraActivity extends AppCompatActivity {
             }
 
             Log.i(" - - - - - - - - - - - ", "Picture taken " + getOutputMediaFileUri(MEDIA_TYPE_IMAGE));
-            Toast.makeText(CameraActivity.this, "Saved as: " + getOutputMediaFileUri(MEDIA_TYPE_IMAGE), Toast.LENGTH_LONG).show();
+            Toast.makeText(CameraActivity.this, "Saved as: " + getOutputMediaFileUri(MEDIA_TYPE_IMAGE), Toast.LENGTH_SHORT).show();
             mCamera.startPreview();
 
             //Button buttonHowManyPictures = (Button) findViewById(R.id.button_howManyPictures);
@@ -190,13 +192,15 @@ public class CameraActivity extends AppCompatActivity {
                 int picturesLeftToTake = Integer.parseInt(buttonHowManyPictures.getText().toString());
                 System.out.println("Pictures left: " + picturesLeftToTake);
 
-               if (picturesLeftToTake > 0){
+               if (picturesLeftToTake > 1){
                     //buttonCapture.performClick();
                    takePicture();
                     picturesLeftToTake--;
                     //set pictureLeftToTake
                     buttonHowManyPictures.setText(String.valueOf(picturesLeftToTake));
-                }
+                } else {
+                   buttonHowManyPictures.setText("0");
+               }
             }
 
         }
@@ -205,12 +209,6 @@ public class CameraActivity extends AppCompatActivity {
 
 
     private void startPreview(){
-
-        /** as I am working on the UI, the camera is getting too hot
-         *  therefore Im returning from this method straight away
-         *  TODO Remove the return in order to have a preview
-         */
-
 
         // Create an instance of Camera
         mCamera = getCameraInstance();
@@ -448,7 +446,7 @@ public class CameraActivity extends AppCompatActivity {
     private View whoIsUsingTheSpinner;
 
 
-    int focusAreaSize = 100;
+    int focusAreaSize = 200;
 
     MyAnimator animator = new MyAnimator();
 
@@ -493,7 +491,7 @@ public class CameraActivity extends AppCompatActivity {
         // Add a listener to the button_capture
 
 
-        ImageButton buttonCapture = (ImageButton) findViewById(R.id.button_capture);
+        final ImageButton buttonCapture = (ImageButton) findViewById(R.id.button_capture);
         buttonCapture.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
@@ -776,7 +774,17 @@ public class CameraActivity extends AppCompatActivity {
         buttonZSL.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                if (buttonZSL.getText() == "ZSL\nON") {
+                    //toggle off
+                    mCameraParameters.set("zsl", "off");
+                    mCamera.setParameters(mCameraParameters);
+                    buttonZSL.setText("ZSL\nOFF");
+                } else {
+                    //toggle on
+                    mCameraParameters.set("zsl", "on");
+                    mCamera.setParameters(mCameraParameters);
+                    buttonZSL.setText("ZSL\nON");
+                }
             }
         });
 
@@ -796,6 +804,15 @@ public class CameraActivity extends AppCompatActivity {
                     // toggle on
                     animator.fadeIn(menuPictureCount);
                 }
+            }
+        });
+
+        // reset howManyPictures
+        buttonHowManyPictures.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                buttonHowManyPictures.setText("0");
+                return true;
             }
         });
 
@@ -884,16 +901,76 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
 
+        final SeekBar seekBarZoom = (SeekBar) findViewById(R.id.seekbar_zoom);
+        final TextView textViewZoom = (TextView) findViewById(R.id.text_view_zoom);
+        // get how many steps
+        List zoomRatiosList = mCameraParameters.getZoomRatios();
+        int steps = zoomRatiosList.size();
+        System.out.println("Zoom steps: " + steps);
+        System.out.println("getMaxZoom: " + mCameraParameters.getMaxZoom());
+        // set max
+        seekBarZoom.setMax(steps - 1);
+        // set step
+        seekBarZoom.incrementProgressBy(1);
+        // setListener
+        seekBarZoom.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                mCameraParameters.setZoom(progress);
+                mCamera.setParameters(mCameraParameters);
+                if (fromUser) {
+                    System.out.println("seekBar from user: " + progress);
+                } else {
+                    System.out.println("seekBar from code: " + progress);
+                }
 
+                animator.tempTextView(textViewZoom, String.valueOf(progress));
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+
+
+        // butttonZoomPlus
+        Button buttonZoomPlus = (Button) findViewById(R.id.button_zoom_plus);
+        buttonZoomPlus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                seekBarZoom.setProgress((seekBarZoom.getProgress() + 1));
+            }
+        });
+
+        // buttonZoomMinus
+        Button buttonZoomMinus = (Button) findViewById(R.id.button_zoom_minus);
+        buttonZoomMinus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                seekBarZoom.setProgress((seekBarZoom.getProgress() - 1));
+            }
+        });
 
 
 
         // end of set listeners --------------------------------------------------------------------
     }
 
+
+
+
+
+
+
     private void takePicture() {
-        // load sound
-        mediaActionSound.load(MediaActionSound.SHUTTER_CLICK);
         // get an image from the camera
         mCamera.takePicture(null, null, mPicture);
     }
@@ -916,7 +993,7 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public void run() {
                 textViewCentral.setText(String.valueOf(countDown));
-                if (countDown > 0) {
+                if (countDown > 1) {
                     System.out.println("Countdown: " + countDown);
                     countDown--;
                     h.postDelayed(this, 1000);
