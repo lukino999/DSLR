@@ -10,7 +10,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.provider.ContactsContract;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -40,7 +39,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.StringTokenizer;
 
 import static android.content.ContentValues.TAG;
 
@@ -153,12 +151,16 @@ public class CameraActivity extends AppCompatActivity {
 
     private boolean isPictureSequenceEnabled = false;
 
+
+
     private Camera.PictureCallback mPicture = new Camera.PictureCallback() {
 
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
 
+            FrameLayout frameShutter = (FrameLayout) findViewById(R.id.frame_shutter);
             mediaActionSound.play(MediaActionSound.SHUTTER_CLICK);
+            animator.shutterAnimation(frameShutter);
             File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
             if (pictureFile == null){
                 Log.d(TAG, "Error creating media file, check storage permissions: ");  //e.getMessage();
@@ -179,12 +181,12 @@ public class CameraActivity extends AppCompatActivity {
             Toast.makeText(CameraActivity.this, "Saved as: " + getOutputMediaFileUri(MEDIA_TYPE_IMAGE), Toast.LENGTH_LONG).show();
             mCamera.startPreview();
 
-            Button buttonHowManyPictures = (Button) findViewById(R.id.button_howManyPictures);
-            //ImageButton buttonCapture = (ImageButton) findViewById(R.id.button_capture);
+            //Button buttonHowManyPictures = (Button) findViewById(R.id.button_howManyPictures);
             // check whether is picture sequence
             if (isPictureSequenceEnabled) {
 
                 // get how many pictures left to take
+                Button buttonHowManyPictures = (Button) findViewById(R.id.button_howManyPictures);
                 int picturesLeftToTake = Integer.parseInt(buttonHowManyPictures.getText().toString());
                 System.out.println("Pictures left: " + picturesLeftToTake);
 
@@ -780,6 +782,33 @@ public class CameraActivity extends AppCompatActivity {
 
 
 
+
+        final Button buttonHowManyPictures = (Button) findViewById(R.id.button_howManyPictures);
+
+        // button_plus_one
+        Button buttonPlusOne = (Button) findViewById(R.id.button_plus_one);
+        buttonPlusOne.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int picturesLeftToTake = Integer.parseInt(buttonHowManyPictures.getText().toString());
+                picturesLeftToTake++;
+                buttonHowManyPictures.setText(String.valueOf(picturesLeftToTake));
+            }
+        });
+
+        Button buttonPlusTen = (Button) findViewById(R.id.button_plus_ten);
+        buttonPlusTen.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int picturesLeftToTake = Integer.parseInt(buttonHowManyPictures.getText().toString());
+                picturesLeftToTake+=10;
+                buttonHowManyPictures.setText(String.valueOf(picturesLeftToTake));
+            }
+        });
+
+        FrameLayout frameShutter = (FrameLayout) findViewById(R.id.frame_shutter);
+
+
         // end of set listeners --------------------------------------------------------------------
     }
 
@@ -799,7 +828,7 @@ public class CameraActivity extends AppCompatActivity {
     }
 
     private int countDown = 3;
-    private void countDown(){
+    private void countDown() {
 
         final TextView textViewCentral = (TextView) findViewById(R.id.text_view_central);
 
@@ -833,42 +862,7 @@ public class CameraActivity extends AppCompatActivity {
 
         animator.fadeIn(textViewCentral);
         h.post(r);
-    }
-
-    private void getSequenceOfPictures() {
-        /*
-        https://stackoverflow.com/questions/18249554/android-view-performclick-and-callonclick-difference
-
-
-        public boolean performClick ()
-        Added in API level 1
-        Call this view's OnClickListener, if it is defined.
-        Performs all normal actions associated with clicking:
-        reporting accessibility event, playing a sound, etc.
-
-
-        public boolean callOnClick ()
-        Added in API level 15
-        Directly call any attached OnClickListener.
-        Unlike performClick(), this only calls the listener,
-        and does not do any associated clicking actions like
-        reporting an accessibility event.
-         */
-
-        Button buttonHowManyPictures = (Button) findViewById(R.id.button_howManyPictures);
-        int picturesLeftToTake = Integer.parseInt(buttonHowManyPictures.getText().toString());
-        System.out.println("Pictures left: " + picturesLeftToTake);
-
-        ImageButton buttonCapture = (ImageButton) findViewById(R.id.button_capture);
-        while (picturesLeftToTake > 0){
-            buttonCapture.performClick();
-            picturesLeftToTake--;
-            buttonHowManyPictures.setText(String.valueOf(picturesLeftToTake));
-        }
-
-
 
     }
-
 
 }

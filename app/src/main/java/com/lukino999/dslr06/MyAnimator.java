@@ -63,4 +63,32 @@ public class MyAnimator extends AppCompatActivity {
             }
         });
     }
+
+    public void shutterAnimation(final View v){
+
+        v.setAlpha(1f);
+        v.setVisibility(View.VISIBLE);
+        v.animate().alpha(0f).setDuration(200).setListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                v.setVisibility(View.INVISIBLE);
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+
+            }
+        });
+
+    }
 }
