@@ -9,7 +9,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#fff"
-        android:visibility="invisible"></FrameLayout>
+        android:visibility="invisible">
+    </FrameLayout>
 
     <RelativeLayout
         android:id="@+id/menu_picture_count"
@@ -18,7 +19,8 @@
         android:layout_alignTop="@+id/button_howManyPictures"
         android:layout_toLeftOf="@+id/button_howManyPictures"
         android:layout_toStartOf="@+id/button_howManyPictures"
-        android:layout_marginRight="5dp">
+        android:layout_marginRight="5dp"
+        android:visibility="invisible">
 
         <Button
             android:id="@+id/button_plus_one"
@@ -44,6 +46,66 @@
 
     </RelativeLayout>
 
+    <Button
+        android:id="@+id/button_flash_mode"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginBottom="5dp"
+        android:background="#afff"
+        android:text="Flash"
+        android:textColor="@color/colorPrimary"
+        android:layout_above="@id/button_iso"
+        android:layout_alignLeft="@id/button_iso"/>
+
+    <RelativeLayout
+        android:id="@+id/menu_flash_mode"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_alignBottom="@+id/button_flash_mode"
+        android:layout_toRightOf="@id/button_flash_mode"
+        android:layout_marginLeft="5dp"
+        >
+        <Button
+            android:id="@+id/button_flash_auto"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="#afff"
+            android:text="Auto"
+            android:textColor="@color/colorPrimary"
+            />
+        <Button
+            android:id="@+id/button_flash_on"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="#afff"
+            android:text="ON"
+            android:textColor="@color/colorPrimary"
+            android:layout_toRightOf="@id/button_flash_auto"
+            android:layout_marginLeft="5dp"/>
+
+        <Button
+            android:id="@+id/button_flash_off"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="#afff"
+            android:text="OFF"
+            android:textColor="@color/colorPrimary"
+            android:layout_toRightOf="@id/button_flash_on"
+            android:layout_marginLeft="5dp"/>
+
+        <Button
+            android:id="@+id/button_flash_torch"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="#afff"
+            android:text="Torch"
+            android:textColor="@color/colorPrimary"
+            android:layout_toRightOf="@id/button_flash_off"
+            android:layout_marginLeft="5dp"/>
+
+
+
+    </RelativeLayout>
 
     <Button
         android:id="@+id/button_howManyPictures"

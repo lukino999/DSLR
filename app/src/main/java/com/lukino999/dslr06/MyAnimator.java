@@ -10,7 +10,7 @@ import android.view.View;
 
 public class MyAnimator extends AppCompatActivity {
 
-    long duration = 500;
+    long duration = 300;
 
     public void fadeIn(final View v){
         v.setVisibility(View.VISIBLE);

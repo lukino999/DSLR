@@ -530,7 +530,7 @@ public class CameraActivity extends AppCompatActivity {
         buttonFocusMode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isButtonFocusModeClicked){
+                if (menuFocusMode.getVisibility() == View.VISIBLE){
                     // menu is visible. Toggle it off
                     animator.fadeOut(menuFocusMode);
                     isButtonFocusModeClicked = false;
@@ -781,9 +781,23 @@ public class CameraActivity extends AppCompatActivity {
         });
 
 
-
-
+        // toggle howManyPictures +1 +10 menu
+        final RelativeLayout menuPictureCount = (RelativeLayout) findViewById(R.id.menu_picture_count);
+        menuPictureCount.setVisibility(View.INVISIBLE);
         final Button buttonHowManyPictures = (Button) findViewById(R.id.button_howManyPictures);
+        buttonHowManyPictures.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                System.out.println("buttonHowManyPictures.setOnClickListener");
+                if (menuPictureCount.getVisibility() == View.VISIBLE) {
+                    //toggle off
+                    animator.fadeOut(menuPictureCount);
+                } else {
+                    // toggle on
+                    animator.fadeIn(menuPictureCount);
+                }
+            }
+        });
 
         // button_plus_one
         Button buttonPlusOne = (Button) findViewById(R.id.button_plus_one);
@@ -796,6 +810,7 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
 
+        // button_plus_ten
         Button buttonPlusTen = (Button) findViewById(R.id.button_plus_ten);
         buttonPlusTen.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -806,7 +821,7 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
 
-        FrameLayout frameShutter = (FrameLayout) findViewById(R.id.frame_shutter);
+
 
 
         // end of set listeners --------------------------------------------------------------------
