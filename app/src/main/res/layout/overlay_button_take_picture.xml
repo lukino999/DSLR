@@ -54,7 +54,7 @@
         android:background="#afff"
         android:text="Flash"
         android:textColor="@color/colorPrimary"
-        android:layout_above="@id/button_iso"
+        android:layout_above="@+id/button_iso"
         android:layout_alignLeft="@id/button_iso"/>
 
     <RelativeLayout
@@ -62,7 +62,7 @@
         android:layout_width="wrap_content"
         android:layout_height="50dp"
         android:layout_alignBottom="@+id/button_flash_mode"
-        android:layout_toRightOf="@id/button_flash_mode"
+        android:layout_toRightOf="@+id/button_flash_mode"
         android:layout_marginLeft="5dp"
         >
         <Button
@@ -80,7 +80,7 @@
             android:background="#afff"
             android:text="ON"
             android:textColor="@color/colorPrimary"
-            android:layout_toRightOf="@id/button_flash_auto"
+            android:layout_toRightOf="@+id/button_flash_auto"
             android:layout_marginLeft="5dp"/>
 
         <Button
@@ -90,7 +90,7 @@
             android:background="#afff"
             android:text="OFF"
             android:textColor="@color/colorPrimary"
-            android:layout_toRightOf="@id/button_flash_on"
+            android:layout_toRightOf="@+id/button_flash_on"
             android:layout_marginLeft="5dp"/>
 
         <Button
@@ -100,7 +100,7 @@
             android:background="#afff"
             android:text="Torch"
             android:textColor="@color/colorPrimary"
-            android:layout_toRightOf="@id/button_flash_off"
+            android:layout_toRightOf="@+id/button_flash_off"
             android:layout_marginLeft="5dp"/>
 
 
@@ -246,8 +246,5 @@
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
         android:visibility="invisible"/>
-
-
-
 
 </RelativeLayout>

@@ -821,6 +821,70 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
 
+        // button_flash_mode
+        final Button buttonFlashMode = (Button) findViewById(R.id.button_flash_mode);
+        final RelativeLayout menuFlashMode = (RelativeLayout) findViewById(R.id.menu_flash_mode);
+        menuFlashMode.setVisibility(View.INVISIBLE);
+        // set button_flash_mode text
+        buttonFlashMode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                buttonFlashMode.setText("Flash\n" + mCameraParameters.get("flash-mode").toUpperCase());
+                if (menuFlashMode.getVisibility() == View.VISIBLE){
+                    //toggle off
+                    animator.fadeOut(menuFlashMode);
+                } else {
+                    // toggle on
+                    animator.fadeIn(menuFlashMode);
+                }
+            }
+        });
+
+        // button_flash_off
+        Button buttonFlashOff = (Button) findViewById(R.id.button_flash_off);
+        buttonFlashOff.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mCameraParameters.set("flash-mode", "off");
+                mCamera.setParameters(mCameraParameters);
+                buttonFlashMode.performClick();
+            }
+        });
+
+        // button_flash_on
+        Button buttonFlashOn = (Button) findViewById(R.id.button_flash_on);
+        buttonFlashOn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mCameraParameters.set("flash-mode", "on");
+                mCamera.setParameters(mCameraParameters);
+                buttonFlashMode.performClick();
+            }
+        });
+
+        // button_flash_auto
+        Button buttonFlashAuto = (Button) findViewById(R.id.button_flash_auto);
+        buttonFlashAuto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mCameraParameters.set("flash-mode", "auto");
+                mCamera.setParameters(mCameraParameters);
+                buttonFlashMode.performClick();
+            }
+        });
+
+        // button_flash_torch
+        Button buttonFlashTorch = (Button) findViewById(R.id.button_flash_torch);
+        buttonFlashTorch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mCameraParameters.set("flash-mode", "torch");
+                mCamera.setParameters(mCameraParameters);
+                buttonFlashMode.performClick();
+            }
+        });
+
+
 
 
 
