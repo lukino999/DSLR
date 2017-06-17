@@ -25,6 +25,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.Spinner;
@@ -227,7 +228,7 @@ public class CameraActivity extends AppCompatActivity {
 
         // this inflates the overlay_button_take_picture_button_take_picture.xml file to the View viewControl
         controlInflater = LayoutInflater.from(getBaseContext());
-        View viewControl = controlInflater.inflate(R.layout.overlay_button_take_picture, null);
+        View viewControl = controlInflater.inflate(R.layout.controls_camera, null);
         ViewGroup.LayoutParams layoutParamsControl
                 = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
                 ViewGroup.LayoutParams.FILL_PARENT);
@@ -396,16 +397,14 @@ public class CameraActivity extends AppCompatActivity {
                 setPreviewAspectRatio();
 
                 // sets the user interface functionality
-                setListeners();
+//                setListeners();
+
+                setControls();
 
             }
         });
         Log.i(" - - - - - - - - - - - ", "end of onCreate");
     }
-
-
-
-
 
     // release the camera once done ----------------------------------------------------------------
     private void releaseCamera(){
@@ -433,6 +432,191 @@ public class CameraActivity extends AppCompatActivity {
     // ---------------------------------------------------------------------------------------------
 
 
+    // ---------------------------------------------------------------------------------------------
+
+    private Camera.Parameters mCameraParameters;
+    private ListView listViewMenu;
+//    private ListView listView;
+
+
+    private void setControls() {
+
+        mCameraParameters = mCamera.getParameters();
+        listViewMenu = (ListView) findViewById(R.id.list_view_menu);
+
+        initializeButtonCapture();
+
+        initializeCameraPreviewAutofocus();
+
+        initializeButtonISO();
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+    private void updateMenu(String keyAvailableValues, final String keyCurrentValue, View v){
+        if (ListViewMenuVisible && (whoIsUsingTheListViewMenu == v)) {
+            // toggle OFF
+            animator.fadeOut(listViewMenu);
+            ListViewMenuVisible = false;
+            whoIsUsingTheListViewMenu = null;
+        } else {
+            // toggle ON
+            whoIsUsingTheListViewMenu = v;
+            ListViewMenuVisible = true;
+            // get the avaliableValues as string[]
+            final String[] avaliableValues = mCameraParameters.get(keyAvailableValues).split(",");
+            //convert it to ArrayList
+            final ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(avaliableValues));
+            // fill the listViewMenu
+            fillTheListViewMenu(arrayList);
+
+
+            String currentValueString = mCameraParameters.get(keyCurrentValue);
+            //find current value index
+            int currentValueInt = arrayList.indexOf(currentValueString);
+            log("currentValueString " + currentValueString + "   -   currentValueInt: " + currentValueInt);
+
+
+            // show the listViewMenu
+            animator.fadeIn(listViewMenu);
+
+            //
+            listViewMenu.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    log("listViewMenu.OnItemClick");
+                    mCameraParameters.set(keyCurrentValue, avaliableValues[position]);
+                    mCamera.setParameters(mCameraParameters);
+
+                }
+            });
+
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private void initializeButtonISO() {
+        Button buttonGetIso = (Button) findViewById(R.id.button_iso);
+        buttonGetIso.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateMenu("iso-values", "iso", v);
+            }
+        });
+    }
+
+    private void initializeCameraPreviewAutofocus() {
+        // focus touching the preview
+        FrameLayout cameraPreview = (FrameLayout) findViewById(R.id.camera_preview);
+        cameraPreview.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+
+                log("cameraPreview.OnTouch");
+
+                // only available in
+                /*The Rect field in a Camera.Area object describes a
+                rectangular shape mapped on a 2000 x 2000 unit grid.
+                The coordinates -1000, -1000 represent the top, left corner of the camera image,
+                and coordinates 1000, 1000 represent the bottom,
+                right corner of the camera image, as shown in the illustration below.
+                https://developer.android.com/guide/topics/media/images/camera-area-coordinates.png
+                 */
+                int xRect = (int) ((event.getX() / v.getWidth() * 2000)-1000);
+                int yRect = (int) ((event.getY() / v.getHeight() * 2000)-1000);
+
+                System.out.println("getX, getY: " + event.getX() + ", " + event.getY());
+                System.out.println("xRect, yRect: " + xRect + ", " + yRect);
+
+                // make sure the rect it's inside the allowed range
+                if (xRect < (-1000 + (focusAreaSize / 2 ))) xRect = (-1000 + (focusAreaSize / 2));
+                if (xRect > (1000 - (focusAreaSize / 2 ))) xRect = (1000 - (focusAreaSize / 2 ));
+                if (yRect < (-1000 + (focusAreaSize / 2 ))) yRect = (-1000 + (focusAreaSize / 2));
+                if (yRect > (1000 - (focusAreaSize / 2 ))) yRect = (1000 - (focusAreaSize / 2 ));
+
+                Rect focusAreaRect = new Rect(xRect - focusAreaSize / 2, yRect - focusAreaSize / 2,
+                        xRect + focusAreaSize / 2, yRect + focusAreaSize / 2);
+                List<Camera.Area> focusAreasList = new ArrayList<>();
+                focusAreasList.add(new Camera.Area(focusAreaRect, 1000));
+                mCameraParameters.setFocusAreas(focusAreasList);
+                mCamera.setParameters(mCameraParameters);
+
+                if ((mCameraParameters.getFocusMode() == Camera.Parameters.FOCUS_MODE_AUTO) ||
+                        (mCameraParameters.getFocusMode() == Camera.Parameters.FOCUS_MODE_MACRO)){
+                    System.out.println("autofocus");
+                    mCamera.autoFocus(autoFocusCallback);
+                }
+
+                return false;
+            }
+        });
+    }
+
+    private void log(String s) {
+        System.out.println(s);
+    }
+
+    private void initializeButtonCapture() {
+
+        final ImageButton buttonCapture = (ImageButton) findViewById(R.id.button_capture);
+        buttonCapture.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        isPictureSequenceEnabled = false;
+                        takePicture();
+                    }
+                }
+        );
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -441,9 +625,9 @@ public class CameraActivity extends AppCompatActivity {
 
     // define buttons clicked state
     boolean isButtonFocusModeClicked = false;
-    boolean isSpinnerVisible = false;
+    boolean ListViewMenuVisible = false;
     public boolean hasSpinnerJustBeenFired = true;
-    private View whoIsUsingTheSpinner;
+    private View whoIsUsingTheListViewMenu;
 
 
     int focusAreaSize = 200;
@@ -470,6 +654,15 @@ public class CameraActivity extends AppCompatActivity {
             }
         }
     };
+
+
+
+
+
+
+
+
+
 
 
     private void setListeners(){
@@ -659,36 +852,36 @@ public class CameraActivity extends AppCompatActivity {
         buttonGetIso.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isSpinnerVisible && (whoIsUsingTheSpinner == v)) {
+                if (ListViewMenuVisible && (whoIsUsingTheListViewMenu == v)) {
                     // toggle OFF
                     animator.fadeOut(spinner);
-                    isSpinnerVisible = false;
-                    whoIsUsingTheSpinner = null;
+                    ListViewMenuVisible = false;
+                    whoIsUsingTheListViewMenu = null;
                     setFullscreen();
                 } else {
                     // toggle ON
-                    whoIsUsingTheSpinner = v;
-                    isSpinnerVisible = true;
+                    whoIsUsingTheListViewMenu = v;
+                    ListViewMenuVisible = true;
 
 
                     // get the iso_values as string[]
                     final String[] iso_values = mCameraParameters.get("iso-values").split(",");
                     //convert it to ArrayList
                     final ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(iso_values));
-                    // fill the spinner
-                    fillTheSpinner(arrayList);
+                    // fill the listViewMenu
+                    fillTheListViewMenu(arrayList);
 
                     String currentValueString = mCameraParameters.get("iso");
                     //find current value index
                     int currentValueInt = arrayList.indexOf(currentValueString);
                     System.out.println("currentValueString " + currentValueString + "   -   currentValueInt: " + currentValueInt);
-                    // select from spinner to match current value
+                    // select from listViewMenu to match current value
                     spinner.setSelection(currentValueInt, true);
 
-                    // show the spinner
+                    // show the listViewMenu
                     animator.fadeIn(spinner);
 
-                    // set a onItemSelectListener for the spinner
+                    // set a onItemSelectListener for the listViewMenu
                     spinner.setOnItemSelectedListener(null); // null the listener in case it's already assigned
                     spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                         @Override
@@ -722,29 +915,29 @@ public class CameraActivity extends AppCompatActivity {
         buttonSceneMode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isSpinnerVisible && (whoIsUsingTheSpinner == v)) {
+                if (ListViewMenuVisible && (whoIsUsingTheListViewMenu == v)) {
                     // toggle OFF
                     animator.fadeOut(spinner);
-                    isSpinnerVisible = false;
-                    whoIsUsingTheSpinner = null;
+                    ListViewMenuVisible = false;
+                    whoIsUsingTheListViewMenu = null;
                     setFullscreen();
                 } else {
                     // toggle ON
-                    whoIsUsingTheSpinner = v;
-                    isSpinnerVisible = true;
+                    whoIsUsingTheListViewMenu = v;
+                    ListViewMenuVisible = true;
 
 
                     // get the iso_values as string[]
                     final String[] supportedSceneModeValues = mCameraParameters.get("scene-mode-values").split(",");
                     //convert it to ArrayList
                     final ArrayList<String> sceneModesValues= new ArrayList<>(Arrays.asList(supportedSceneModeValues));
-                    // fill the spinner
-                    fillTheSpinner(sceneModesValues);
+                    // fill the listViewMenu
+                    fillTheListViewMenu(sceneModesValues);
 
                     //get current value index
                     int currentValueIndex = sceneModesValues.indexOf(mCameraParameters.get("scene-mode"));
 
-                    // set spinner to current value
+                    // set listViewMenu to current value
                     spinner.setSelection(currentValueIndex, false);
 
                     animator.fadeIn(spinner);
@@ -905,39 +1098,43 @@ public class CameraActivity extends AppCompatActivity {
         final TextView textViewZoom = (TextView) findViewById(R.id.text_view_zoom);
         // get how many steps
         List zoomRatiosList = mCameraParameters.getZoomRatios();
-        int steps = zoomRatiosList.size();
-        System.out.println("Zoom steps: " + steps);
-        System.out.println("getMaxZoom: " + mCameraParameters.getMaxZoom());
-        // set max
-        seekBarZoom.setMax(steps - 1);
-        // set step
-        seekBarZoom.incrementProgressBy(1);
-        // setListener
-        seekBarZoom.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mCameraParameters.setZoom(progress);
-                mCamera.setParameters(mCameraParameters);
-                if (fromUser) {
-                    System.out.println("seekBar from user: " + progress);
-                } else {
-                    System.out.println("seekBar from code: " + progress);
+
+        if (zoomRatiosList != null) {
+            int steps = zoomRatiosList.size();
+            System.out.println("Zoom steps: " + steps);
+            System.out.println("getMaxZoom: " + mCameraParameters.getMaxZoom());
+            // set max
+            seekBarZoom.setMax(steps - 1);
+            // set step
+            seekBarZoom.incrementProgressBy(1);
+            // setListener
+            seekBarZoom.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    mCameraParameters.setZoom(progress);
+                    mCamera.setParameters(mCameraParameters);
+                    if (fromUser) {
+                        System.out.println("seekBar from user: " + progress);
+                    } else {
+                        System.out.println("seekBar from code: " + progress);
+                    }
+
+                    animator.tempTextView(textViewZoom, String.valueOf(progress));
+
                 }
 
-                animator.tempTextView(textViewZoom, String.valueOf(progress));
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
 
-            }
+                }
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
 
-            }
+                }
+            });
+        }
 
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
 
 
 
@@ -975,11 +1172,11 @@ public class CameraActivity extends AppCompatActivity {
         mCamera.takePicture(null, null, mPicture);
     }
 
-    private void fillTheSpinner(ArrayList<String> arrayList){
+    private void fillTheListViewMenu(ArrayList<String> arrayList){
 
-        Spinner spinner = (Spinner) findViewById(R.id.spinner);
+        ListView listViewMenu = (ListView) findViewById(R.id.list_view_menu);
         ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, arrayList);
-        spinner.setAdapter(arrayAdapter);
+        listViewMenu.setAdapter(arrayAdapter);
 
     }
 
