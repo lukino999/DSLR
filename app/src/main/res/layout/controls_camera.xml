@@ -13,6 +13,9 @@
         android:layout_toRightOf="@+id/button_flash_mode"
         android:layout_toEndOf="@+id/button_flash_mode"
         android:layout_marginLeft="50dp"
+        android:choiceMode="singleChoice"
+        android:listSelector="@android:color/darker_gray"
+        android:background="?android:attr/activatedBackgroundIndicator"
         >
 
     </ListView>

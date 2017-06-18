@@ -4,6 +4,8 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
 import android.media.MediaActionSound;
 import android.net.Uri;
@@ -20,6 +22,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -238,11 +241,14 @@ public class CameraActivity extends AppCompatActivity {
 
     private void startCamera(){
 
+        // are permissions granted
         if ((ContextCompat.checkSelfPermission(CameraActivity.this,
                 Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) ||
                 (ContextCompat.checkSelfPermission(CameraActivity.this,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)){
+                Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)){
+
             checkPermissions();
+
             return;
         }
 
@@ -250,6 +256,30 @@ public class CameraActivity extends AppCompatActivity {
 
         // Start preview
         startPreview();
+
+        // listens to layout to be ready before calling the setPreviewAspectRatio
+        final FrameLayout layout = (FrameLayout) findViewById(R.id.camera_preview);
+
+        // add listener for camera_preview to be drawn, then call the setPreviewAspectRatio()
+        ViewTreeObserver vto = layout.getViewTreeObserver();
+
+        vto.addOnGlobalLayoutListener (new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+
+                // remove the listener as you only what this executed once
+                layout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+
+                // set camera_preview aspect ratio
+                setPreviewAspectRatio();
+
+                // sets the user interface functionality
+//                setListeners();
+
+                setControls();
+
+            }
+        });
 
     }
 
@@ -369,40 +399,17 @@ public class CameraActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.i(" - - - - - - - - - - - ", "onCreate");
+        log(" - - - - - - - - - - - onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
         appName = getApplicationInfo().loadLabel(getPackageManager()).toString();
-        Log.i("AppName", appName);
+        log("AppName " + appName);
 
         startCamera();
 
 
-        // listens to layout to be ready before calling the setPreviewAspectRatio
-        final FrameLayout layout = (FrameLayout) findViewById(R.id.camera_preview);
 
-
-
-        // add listener for camera_preview to be drawn, then call the setPreviewAspectRatio()
-        ViewTreeObserver vto = layout.getViewTreeObserver();
-        vto.addOnGlobalLayoutListener (new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-
-                // remove the listener as you only what this executed once
-                layout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-
-                // set camera_preview aspect ratio
-                setPreviewAspectRatio();
-
-                // sets the user interface functionality
-//                setListeners();
-
-                setControls();
-
-            }
-        });
         Log.i(" - - - - - - - - - - - ", "end of onCreate");
     }
 
@@ -472,47 +479,39 @@ public class CameraActivity extends AppCompatActivity {
             // toggle ON
             whoIsUsingTheListViewMenu = v;
             ListViewMenuVisible = true;
-            // get the avaliableValues as string[]
-            final String[] avaliableValues = mCameraParameters.get(keyAvailableValues).split(",");
+            // get the availableValues as string[]
+            final String[] availableValues = mCameraParameters.get(keyAvailableValues).split(",");
             //convert it to ArrayList
-            final ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(avaliableValues));
+            final ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(availableValues));
             // fill the listViewMenu
             fillTheListViewMenu(arrayList);
 
 
             String currentValueString = mCameraParameters.get(keyCurrentValue);
             //find current value index
-            int currentValueInt = arrayList.indexOf(currentValueString);
-            log("currentValueString " + currentValueString + "   -   currentValueInt: " + currentValueInt);
-
+            final int currentValueIndex = arrayList.indexOf(currentValueString);
+            log("currentValueString " + currentValueString + "   -   currentValueInt: " + currentValueIndex);
 
             // show the listViewMenu
             animator.fadeIn(listViewMenu);
+
+
 
             //
             listViewMenu.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    log("listViewMenu.OnItemClick");
-                    mCameraParameters.set(keyCurrentValue, avaliableValues[position]);
+                    log("listViewMenu.OnItemClick:: pos: " + position);
+                    log("View: " + view);
+                    mCameraParameters.set(keyCurrentValue, availableValues[position]);
                     mCamera.setParameters(mCameraParameters);
 
                 }
             });
 
+
         }
     }
-
-
-
-
-
-
-
-
-
-
-
 
 
     private void initializeButtonISO() {
