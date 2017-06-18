@@ -4,21 +4,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
 
-    <ListView
-        android:id="@+id/list_view_menu"
-        android:layout_width="300dp"
-        android:layout_height="wrap_content"
-        android:textAlignment="gravity"
-        android:layout_centerVertical="true"
-        android:layout_toRightOf="@+id/button_flash_mode"
-        android:layout_toEndOf="@+id/button_flash_mode"
-        android:layout_marginLeft="50dp"
-        android:choiceMode="singleChoice"
-        android:listSelector="@android:color/darker_gray"
-        android:background="?android:attr/activatedBackgroundIndicator"
-        >
 
-    </ListView>
 
 
     <TextView
@@ -266,8 +252,7 @@
         android:layout_height="wrap_content"
         android:textColor="@color/colorPrimary"
         android:background="#afff"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentBottom="true"
+        android:layout_centerInParent="true"
         android:visibility="invisible"></Spinner>
 
     <Button

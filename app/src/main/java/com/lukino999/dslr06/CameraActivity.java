@@ -4,8 +4,6 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
 import android.media.MediaActionSound;
 import android.net.Uri;
@@ -22,7 +20,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -89,6 +86,7 @@ public class CameraActivity extends AppCompatActivity {
 
 
     private Camera mCamera;
+
     private CameraPreview mPreview;
 
     // this will be used to inflate an xml to its own View obj
@@ -103,6 +101,7 @@ public class CameraActivity extends AppCompatActivity {
             c = Camera.open(); // attempt to get a Camera instance
         }
         catch (Exception e){
+
             // Camera is not available (in use or does not exist)
             Log.i(" - - - - - - - - - - - ", "something wrong opening the camera");
 
@@ -162,53 +161,55 @@ public class CameraActivity extends AppCompatActivity {
 
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
-
-            // shutter animation
-            FrameLayout frameShutter = (FrameLayout) findViewById(R.id.camera_preview);
-            animator.shutterAnimation(frameShutter);
-
-            File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
-            if (pictureFile == null){
-                Log.d(TAG, "Error creating media file, check storage permissions: ");  //e.getMessage();
-                return;
-            }
-
-            try {
-                FileOutputStream fos = new FileOutputStream(pictureFile);
-                fos.write(data);
-                fos.close();
-            } catch (FileNotFoundException e) {
-                Log.d(TAG, "File not found: " + e.getMessage());
-            } catch (IOException e) {
-                Log.d(TAG, "Error accessing file: " + e.getMessage());
-            }
-
-            Log.i(" - - - - - - - - - - - ", "Picture taken " + getOutputMediaFileUri(MEDIA_TYPE_IMAGE));
-            Toast.makeText(CameraActivity.this, "Saved as: " + getOutputMediaFileUri(MEDIA_TYPE_IMAGE), Toast.LENGTH_SHORT).show();
-            mCamera.startPreview();
-
-            //Button buttonHowManyPictures = (Button) findViewById(R.id.button_howManyPictures);
-            // check whether is picture sequence
-            if (isPictureSequenceEnabled) {
-
-                // get how many pictures left to take
-                Button buttonHowManyPictures = (Button) findViewById(R.id.button_howManyPictures);
-                int picturesLeftToTake = Integer.parseInt(buttonHowManyPictures.getText().toString());
-                System.out.println("Pictures left: " + picturesLeftToTake);
-
-               if (picturesLeftToTake > 1){
-                    //buttonCapture.performClick();
-                   takePicture();
-                    picturesLeftToTake--;
-                    //set pictureLeftToTake
-                    buttonHowManyPictures.setText(String.valueOf(picturesLeftToTake));
-                } else {
-                   buttonHowManyPictures.setText("0");
-               }
-            }
-
+            onPictureTakenCode(data);
         }
     };
+    private void onPictureTakenCode(byte[] data) {
+        // shutter animation
+        FrameLayout frameShutter = (FrameLayout) findViewById(R.id.camera_preview);
+        animator.shutterAnimation(frameShutter);
+
+        File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
+        if (pictureFile == null){
+            Log.d(TAG, "Error creating media file, check storage permissions: ");  //e.getMessage();
+            return;
+        }
+
+        try {
+            FileOutputStream fos = new FileOutputStream(pictureFile);
+            fos.write(data);
+            fos.close();
+        } catch (FileNotFoundException e) {
+            Log.d(TAG, "File not found: " + e.getMessage());
+        } catch (IOException e) {
+            Log.d(TAG, "Error accessing file: " + e.getMessage());
+        }
+
+        Log.i(" - - - - - - - - - - - ", "Picture taken " + getOutputMediaFileUri(MEDIA_TYPE_IMAGE));
+        Toast.makeText(CameraActivity.this, "Saved as: " + getOutputMediaFileUri(MEDIA_TYPE_IMAGE), Toast.LENGTH_SHORT).show();
+        mCamera.startPreview();
+
+        //Button buttonHowManyPictures = (Button) findViewById(R.id.button_howManyPictures);
+        // check whether is picture sequence
+        if (isPictureSequenceEnabled) {
+
+            // get how many pictures left to take
+            Button buttonHowManyPictures = (Button) findViewById(R.id.button_howManyPictures);
+            int picturesLeftToTake = Integer.parseInt(buttonHowManyPictures.getText().toString());
+            System.out.println("Pictures left: " + picturesLeftToTake);
+
+            if (picturesLeftToTake > 1){
+                //buttonCapture.performClick();
+                takePicture();
+                picturesLeftToTake--;
+                //set pictureLeftToTake
+                buttonHowManyPictures.setText(String.valueOf(picturesLeftToTake));
+            } else {
+                buttonHowManyPictures.setText("0");
+            }
+        }
+
+    }
 
 
 
@@ -217,11 +218,11 @@ public class CameraActivity extends AppCompatActivity {
         // Create an instance of Camera
         mCamera = getCameraInstance();
 
-        System.out.println("mcamera: " + mCamera);
-
         // Create our Preview view and set it as the content of our activity.
         mPreview = new CameraPreview(this, mCamera);
+
         FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
+
         preview.addView(mPreview);
 
 
@@ -231,10 +232,13 @@ public class CameraActivity extends AppCompatActivity {
 
         // this inflates the overlay_button_take_picture_button_take_picture.xml file to the View viewControl
         controlInflater = LayoutInflater.from(getBaseContext());
+
         View viewControl = controlInflater.inflate(R.layout.controls_camera, null);
+
         ViewGroup.LayoutParams layoutParamsControl
                 = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
                 ViewGroup.LayoutParams.FILL_PARENT);
+
         this.addContentView(viewControl, layoutParamsControl);
 
     }
@@ -442,14 +446,14 @@ public class CameraActivity extends AppCompatActivity {
     // ---------------------------------------------------------------------------------------------
 
     private Camera.Parameters mCameraParameters;
-    private ListView listViewMenu;
+    private Spinner menuView;
 //    private ListView listView;
 
 
     private void setControls() {
 
         mCameraParameters = mCamera.getParameters();
-        listViewMenu = (ListView) findViewById(R.id.list_view_menu);
+        menuView = (Spinner) findViewById(R.id.spinner);
 
         initializeButtonCapture();
 
@@ -470,21 +474,30 @@ public class CameraActivity extends AppCompatActivity {
 
 
     private void updateMenu(String keyAvailableValues, final String keyCurrentValue, View v){
-        if (ListViewMenuVisible && (whoIsUsingTheListViewMenu == v)) {
+        if (menuViewVisible && (whoIsUsingTheMenuView == v)) {
             // toggle OFF
-            animator.fadeOut(listViewMenu);
-            ListViewMenuVisible = false;
-            whoIsUsingTheListViewMenu = null;
+            log("Update menu:: toggle OFF");
+            animator.fadeOut(menuView);
+            menuViewVisible = false;
+            whoIsUsingTheMenuView = null;
+            setFullscreen();
         } else {
             // toggle ON
-            whoIsUsingTheListViewMenu = v;
-            ListViewMenuVisible = true;
+            log("Update menu:: toggle ON");
+            whoIsUsingTheMenuView = v;
+            menuViewVisible = true;
             // get the availableValues as string[]
             final String[] availableValues = mCameraParameters.get(keyAvailableValues).split(",");
+
+            //convert to uppercase
+            for (int i = 0; i < availableValues.length; i++) {
+                availableValues[i] = availableValues[i].toUpperCase();
+            }
+
             //convert it to ArrayList
             final ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(availableValues));
-            // fill the listViewMenu
-            fillTheListViewMenu(arrayList);
+            // fill the menuView
+            fillViewMenu(arrayList);
 
 
             String currentValueString = mCameraParameters.get(keyCurrentValue);
@@ -492,23 +505,41 @@ public class CameraActivity extends AppCompatActivity {
             final int currentValueIndex = arrayList.indexOf(currentValueString);
             log("currentValueString " + currentValueString + "   -   currentValueInt: " + currentValueIndex);
 
-            // show the listViewMenu
-            animator.fadeIn(listViewMenu);
-
 
 
             //
-            listViewMenu.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            menuView.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    log("listViewMenu.OnItemClick:: pos: " + position);
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    log("menuView.OnItemClick:: pos: " + position);
                     log("View: " + view);
                     mCameraParameters.set(keyCurrentValue, availableValues[position]);
                     mCamera.setParameters(mCameraParameters);
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {
 
                 }
             });
 
+            ViewTreeObserver vto = menuView.getViewTreeObserver();
+            vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    log("vto.onGlobalLayout");
+
+                    // remove this listener
+                    menuView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+
+                    // set selection to currentValue
+                    menuView.setSelection(currentValueIndex, false);
+
+                    // show the menuView
+                    animator.fadeIn(menuView);
+
+                }
+            });
 
         }
     }
@@ -519,6 +550,7 @@ public class CameraActivity extends AppCompatActivity {
         buttonGetIso.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                log("buttonISO on click");
                 updateMenu("iso-values", "iso", v);
             }
         });
@@ -624,9 +656,9 @@ public class CameraActivity extends AppCompatActivity {
 
     // define buttons clicked state
     boolean isButtonFocusModeClicked = false;
-    boolean ListViewMenuVisible = false;
+    boolean menuViewVisible = false;
     public boolean hasSpinnerJustBeenFired = true;
-    private View whoIsUsingTheListViewMenu;
+    private View whoIsUsingTheMenuView;
 
 
     int focusAreaSize = 200;
@@ -851,36 +883,36 @@ public class CameraActivity extends AppCompatActivity {
         buttonGetIso.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (ListViewMenuVisible && (whoIsUsingTheListViewMenu == v)) {
+                if (menuViewVisible && (whoIsUsingTheMenuView == v)) {
                     // toggle OFF
                     animator.fadeOut(spinner);
-                    ListViewMenuVisible = false;
-                    whoIsUsingTheListViewMenu = null;
+                    menuViewVisible = false;
+                    whoIsUsingTheMenuView = null;
                     setFullscreen();
                 } else {
                     // toggle ON
-                    whoIsUsingTheListViewMenu = v;
-                    ListViewMenuVisible = true;
+                    whoIsUsingTheMenuView = v;
+                    menuViewVisible = true;
 
 
                     // get the iso_values as string[]
                     final String[] iso_values = mCameraParameters.get("iso-values").split(",");
                     //convert it to ArrayList
                     final ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(iso_values));
-                    // fill the listViewMenu
-                    fillTheListViewMenu(arrayList);
+                    // fill the menuView
+                    fillViewMenu(arrayList);
 
                     String currentValueString = mCameraParameters.get("iso");
                     //find current value index
                     int currentValueInt = arrayList.indexOf(currentValueString);
                     System.out.println("currentValueString " + currentValueString + "   -   currentValueInt: " + currentValueInt);
-                    // select from listViewMenu to match current value
+                    // select from menuView to match current value
                     spinner.setSelection(currentValueInt, true);
 
-                    // show the listViewMenu
+                    // show the menuView
                     animator.fadeIn(spinner);
 
-                    // set a onItemSelectListener for the listViewMenu
+                    // set a onItemSelectListener for the menuView
                     spinner.setOnItemSelectedListener(null); // null the listener in case it's already assigned
                     spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                         @Override
@@ -914,29 +946,29 @@ public class CameraActivity extends AppCompatActivity {
         buttonSceneMode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (ListViewMenuVisible && (whoIsUsingTheListViewMenu == v)) {
+                if (menuViewVisible && (whoIsUsingTheMenuView == v)) {
                     // toggle OFF
                     animator.fadeOut(spinner);
-                    ListViewMenuVisible = false;
-                    whoIsUsingTheListViewMenu = null;
+                    menuViewVisible = false;
+                    whoIsUsingTheMenuView = null;
                     setFullscreen();
                 } else {
                     // toggle ON
-                    whoIsUsingTheListViewMenu = v;
-                    ListViewMenuVisible = true;
+                    whoIsUsingTheMenuView = v;
+                    menuViewVisible = true;
 
 
                     // get the iso_values as string[]
                     final String[] supportedSceneModeValues = mCameraParameters.get("scene-mode-values").split(",");
                     //convert it to ArrayList
                     final ArrayList<String> sceneModesValues= new ArrayList<>(Arrays.asList(supportedSceneModeValues));
-                    // fill the listViewMenu
-                    fillTheListViewMenu(sceneModesValues);
+                    // fill the menuView
+                    fillViewMenu(sceneModesValues);
 
                     //get current value index
                     int currentValueIndex = sceneModesValues.indexOf(mCameraParameters.get("scene-mode"));
 
-                    // set listViewMenu to current value
+                    // set menuView to current value
                     spinner.setSelection(currentValueIndex, false);
 
                     animator.fadeIn(spinner);
@@ -1171,11 +1203,11 @@ public class CameraActivity extends AppCompatActivity {
         mCamera.takePicture(null, null, mPicture);
     }
 
-    private void fillTheListViewMenu(ArrayList<String> arrayList){
+    private void fillViewMenu(ArrayList<String> arrayList){
 
-        ListView listViewMenu = (ListView) findViewById(R.id.list_view_menu);
+        Spinner menuView = (Spinner) findViewById(R.id.spinner);
         ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, arrayList);
-        listViewMenu.setAdapter(arrayAdapter);
+        menuView.setAdapter(arrayAdapter);
 
     }
 
