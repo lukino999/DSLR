@@ -19,6 +19,8 @@ public class CameraFunctionsList {
     HashMap<String, String> flash= new HashMap<>();
     HashMap<String, String> iso = new HashMap<>();
     HashMap<String, String> sceneMode = new HashMap<>();
+    HashMap<String, String> pictureSize= new HashMap<>();
+
 
     public CameraFunctionsList() {
 
@@ -45,6 +47,12 @@ public class CameraFunctionsList {
         sceneMode.put(VALUE, "scene-mode");
         sceneMode.put(AVAILABLE_VALUES, "scene-mode-values");
         availableFuntions.add(sceneMode);
+
+        // picture-size
+        pictureSize.put(LABEL, "Picture size");
+        pictureSize.put(VALUE, "picture-size");
+        pictureSize.put(AVAILABLE_VALUES, "picture-size-values");
+        availableFuntions.add(pictureSize);
 
 
     }
