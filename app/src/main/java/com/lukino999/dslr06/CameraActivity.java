@@ -450,6 +450,87 @@ public class CameraActivity extends AppCompatActivity {
 //    private ListView listView;
 
 
+    /*
+    Update menu with values returned by CameraParameters.get(keyAvailableValues)
+    If menu is already up, whoIsCalling tells whether to toggle off or update
+     */
+    private void updateMenu(String keyAvailableValues, final String keyCurrentValue, View whoIsCalling){
+        
+        if (mCameraParameters.get(keyAvailableValues) != null) {
+            // ---------------------------------------------------------------------
+            if (menuViewVisible && (whoIsUsingTheMenuView == whoIsCalling)) {
+                // toggle OFF
+                log("Update menu:: toggle OFF");
+                animator.fadeOut(menuView);
+                menuViewVisible = false;
+                whoIsUsingTheMenuView = null;
+                setFullscreen();
+            } else {
+                // toggle ON
+                log("Update menu:: toggle ON");
+                whoIsUsingTheMenuView = whoIsCalling;
+                menuViewVisible = true;
+                // get the availableValues as string[]
+                final String[] availableValues = mCameraParameters.get(keyAvailableValues).split(",");
+//            final String[] availableValuesUppercase = availableValues;
+
+
+
+                //convert it to ArrayList
+                final ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(availableValues));
+                // fill the menuView
+                fillViewMenu(arrayList);
+
+
+                String currentValueString = mCameraParameters.get(keyCurrentValue);
+                //find current value index
+                final int currentValueIndex = arrayList.indexOf(currentValueString);
+                log("currentValueString " + currentValueString + "   -   currentValueInt: " + currentValueIndex);
+
+
+
+                //
+                menuView.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                        log("menuView.OnItemClick:: pos: " + position);
+                        log("View: " + view);
+                        mCameraParameters.set(keyCurrentValue, availableValues[position]);
+                        mCamera.setParameters(mCameraParameters);
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {
+
+                    }
+                });
+
+                ViewTreeObserver vto = menuView.getViewTreeObserver();
+                vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        log("vto.onGlobalLayout");
+
+                        // remove this listener
+                        menuView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+
+                        // set selection to currentValue
+                        menuView.setSelection(currentValueIndex, false);
+
+                        // show the menuView
+                        animator.fadeIn(menuView);
+
+                    }
+                });
+
+            }
+            // ---------------------------------------------------------------------
+        } else {
+            Toast.makeText(this, "Not availabe", Toast.LENGTH_SHORT).show();
+        }
+        
+    }
+
     private void setControls() {
 
         mCameraParameters = mCamera.getParameters();
@@ -461,99 +542,105 @@ public class CameraActivity extends AppCompatActivity {
 
         initializeButtonISO();
 
+        initializeButtonSceneMode();
+
+        initializeButtonFocus();
+
+        initializeButtonFlash();
+
+        initializeButtonHowManyPictures();
+
+
+
+
+
     }
 
-
-
-
-
-
-
-
-
-
-
-    private void updateMenu(String keyAvailableValues, final String keyCurrentValue, View v){
-        if (menuViewVisible && (whoIsUsingTheMenuView == v)) {
-            // toggle OFF
-            log("Update menu:: toggle OFF");
-            animator.fadeOut(menuView);
-            menuViewVisible = false;
-            whoIsUsingTheMenuView = null;
-            setFullscreen();
-        } else {
-            // toggle ON
-            log("Update menu:: toggle ON");
-            whoIsUsingTheMenuView = v;
-            menuViewVisible = true;
-            // get the availableValues as string[]
-            final String[] availableValues = mCameraParameters.get(keyAvailableValues).split(",");
-
-            //convert to uppercase
-            for (int i = 0; i < availableValues.length; i++) {
-                availableValues[i] = availableValues[i].toUpperCase();
-            }
-
-            //convert it to ArrayList
-            final ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(availableValues));
-            // fill the menuView
-            fillViewMenu(arrayList);
-
-
-            String currentValueString = mCameraParameters.get(keyCurrentValue);
-            //find current value index
-            final int currentValueIndex = arrayList.indexOf(currentValueString);
-            log("currentValueString " + currentValueString + "   -   currentValueInt: " + currentValueIndex);
-
-
-
-            //
-            menuView.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                    log("menuView.OnItemClick:: pos: " + position);
-                    log("View: " + view);
-                    mCameraParameters.set(keyCurrentValue, availableValues[position]);
-                    mCamera.setParameters(mCameraParameters);
-                }
-
-                @Override
-                public void onNothingSelected(AdapterView<?> parent) {
-
-                }
-            });
-
-            ViewTreeObserver vto = menuView.getViewTreeObserver();
-            vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                @Override
-                public void onGlobalLayout() {
-                    log("vto.onGlobalLayout");
-
-                    // remove this listener
-                    menuView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-
-                    // set selection to currentValue
-                    menuView.setSelection(currentValueIndex, false);
-
-                    // show the menuView
-                    animator.fadeIn(menuView);
-
-                }
-            });
-
-        }
-    }
-
-
-    private void initializeButtonISO() {
-        Button buttonGetIso = (Button) findViewById(R.id.button_iso);
-        buttonGetIso.setOnClickListener(new View.OnClickListener() {
+    private void initializeButtonHowManyPictures() {
+        final RelativeLayout menuPictureCount = (RelativeLayout) findViewById(R.id.menu_picture_count);
+        menuPictureCount.setVisibility(View.INVISIBLE);
+        final Button buttonHowManyPictures = (Button) findViewById(R.id.button_howManyPictures);
+        buttonHowManyPictures.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                log("buttonISO on click");
-                updateMenu("iso-values", "iso", v);
+                System.out.println("buttonHowManyPictures.setOnClickListener");
+                if (menuPictureCount.getVisibility() == View.VISIBLE) {
+                    //toggle off
+                    animator.fadeOut(menuPictureCount);
+                } else {
+                    // toggle on
+                    animator.fadeIn(menuPictureCount);
+                }
             }
         });
+
+        // button_plus_one
+        Button buttonPlusOne = (Button) findViewById(R.id.button_plus_one);
+        buttonPlusOne.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int picturesLeftToTake = Integer.parseInt(buttonHowManyPictures.getText().toString());
+                picturesLeftToTake++;
+                buttonHowManyPictures.setText(String.valueOf(picturesLeftToTake));
+            }
+        });
+
+
+        // button_plus_ten
+        Button buttonPlusTen = (Button) findViewById(R.id.button_plus_ten);
+        buttonPlusTen.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int picturesLeftToTake = Integer.parseInt(buttonHowManyPictures.getText().toString());
+                picturesLeftToTake+=10;
+                buttonHowManyPictures.setText(String.valueOf(picturesLeftToTake));
+            }
+        });
+
+
+
+
+
+
+
+    }
+
+    private void initializeButtonFlash() {
+        Button button = (Button) findViewById(R.id.button_flash_mode);
+        initializeButton(button, "flash-mode-values", "flash-mode");
+    }
+
+    private void initializeButtonFocus() {
+        Button button = (Button) findViewById(R.id.button_focus_mode);
+        initializeButton(button, "focus-mode-values", "focus-mode");
+    }
+
+
+    private void initializeButtonCapture() {
+
+        final ImageButton buttonCapture = (ImageButton) findViewById(R.id.button_capture);
+        buttonCapture.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        isPictureSequenceEnabled = false;
+                        takePicture();
+                    }
+                }
+        );
+
+        buttonCapture.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                System.out.println("OnLongClick");
+                countDown();
+
+                return true;
+            }
+        });
+
+
+
     }
 
     private void initializeCameraPreviewAutofocus() {
@@ -576,8 +663,8 @@ public class CameraActivity extends AppCompatActivity {
                 int xRect = (int) ((event.getX() / v.getWidth() * 2000)-1000);
                 int yRect = (int) ((event.getY() / v.getHeight() * 2000)-1000);
 
-                System.out.println("getX, getY: " + event.getX() + ", " + event.getY());
-                System.out.println("xRect, yRect: " + xRect + ", " + yRect);
+                log("getX, getY: " + event.getX() + ", " + event.getY());
+                log("xRect, yRect: " + xRect + ", " + yRect);
 
                 // make sure the rect it's inside the allowed range
                 if (xRect < (-1000 + (focusAreaSize / 2 ))) xRect = (-1000 + (focusAreaSize / 2));
@@ -592,9 +679,15 @@ public class CameraActivity extends AppCompatActivity {
                 mCameraParameters.setFocusAreas(focusAreasList);
                 mCamera.setParameters(mCameraParameters);
 
-                if ((mCameraParameters.getFocusMode() == Camera.Parameters.FOCUS_MODE_AUTO) ||
-                        (mCameraParameters.getFocusMode() == Camera.Parameters.FOCUS_MODE_MACRO)){
-                    System.out.println("autofocus");
+                log("Camera.Parameters.FOCUS_MODE_AUTO: " + Camera.Parameters.FOCUS_MODE_AUTO);
+                log("Camera.Parameters.FOCUS_MODE_MACRO: " + Camera.Parameters.FOCUS_MODE_MACRO);
+                log("mCameraParameters.getFocusMode(): " + mCameraParameters.getFocusMode());
+                log("mCameraParameters.get(\"focus-mode\") " + mCameraParameters.get("focus-mode"));
+                log("-----------------------------------");
+
+                if (mCameraParameters.get("focus-mode").equals(Camera.Parameters.FOCUS_MODE_AUTO) ||
+                        mCameraParameters.get("focus-mode").equals(Camera.Parameters.FOCUS_MODE_MACRO)){
+                    log("autofocus");
                     mCamera.autoFocus(autoFocusCallback);
                 }
 
@@ -603,23 +696,35 @@ public class CameraActivity extends AppCompatActivity {
         });
     }
 
-    private void log(String s) {
-        System.out.println(s);
+    private void initializeButtonISO() {
+
+        Button buttonGetIso = (Button) findViewById(R.id.button_iso);
+
+        initializeButton(buttonGetIso, "iso-values", "iso");
+
     }
 
-    private void initializeButtonCapture() {
+    private void initializeButtonSceneMode() {
+        Button button = (Button) findViewById(R.id.button_scene_mode);
+        initializeButton(button, "scene-mode-values", "scene-mode");
+    }
 
-        final ImageButton buttonCapture = (ImageButton) findViewById(R.id.button_capture);
-        buttonCapture.setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        isPictureSequenceEnabled = false;
-                        takePicture();
-                    }
-                }
-        );
 
+
+    // initialize button
+    private void initializeButton(View button, final String keyAvailableValues, final String keyCurrentValue ){
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                log("onClick:: " + keyCurrentValue);
+                updateMenu(keyAvailableValues, keyCurrentValue, v);
+            }
+        });
+    }
+
+    // log
+    private void log(String s) {
+        System.out.println(s);
     }
 
 
@@ -671,18 +776,7 @@ public class CameraActivity extends AppCompatActivity {
     Camera.AutoFocusCallback autoFocusCallback = new Camera.AutoFocusCallback() {
         @Override
         public void onAutoFocus(boolean success, Camera camera) {
-            System.out.println("Autofocus success: " + success);
-            float focusDistance[] = new float[3];
-            if (success) {
-                mediaActionSound.play(MediaActionSound.START_VIDEO_RECORDING);
-                mCamera.getParameters().getFocusDistances(focusDistance);
-                for (float fd : focusDistance){
-                    System.out.println(fd);
-                }
-            } else {
-                Toast.makeText(CameraActivity.this, "Unable to focus", Toast.LENGTH_SHORT).show();
-
-            }
+            log("Autofocus has been successful: " + success);
         }
     };
 
@@ -696,501 +790,501 @@ public class CameraActivity extends AppCompatActivity {
 
 
 
-    private void setListeners(){
-
-        final Camera.Parameters mCameraParameters = mCamera.getParameters();
-        final Spinner spinner = (Spinner) findViewById(R.id.spinner);
-
-
-
-        /*
-        When it starts in AUTO the autoFocus doesnt seem to work
-        Camera is very hot though. Check again with cool phone
-         */
-        mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
-        mCamera.setParameters(mCameraParameters);
-
-
-
-        // Add a listener to the button_capture
-
-
-        final ImageButton buttonCapture = (ImageButton) findViewById(R.id.button_capture);
-        buttonCapture.setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        isPictureSequenceEnabled = false;
-                        takePicture();
-
-                    }
-                }
-        );
-
-        buttonCapture.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                System.out.println("OnLongClick");
-                countDown();
-
-                return true;
-            }
-        });
-
-
-
-
-
-        // Add listener to button_focus_mode
-        final RelativeLayout menuFocusMode = (RelativeLayout) findViewById(R.id.menu_focus_mode);
-        final Button buttonFocusMode = (Button) findViewById(R.id.button_focus_mode);
-        if (mCameraParameters.getFocusMode() == Camera.Parameters.FOCUS_MODE_INFINITY){
-            buttonFocusMode.setText("INF");
-        } else {
-            buttonFocusMode.setText(mCameraParameters.getFocusMode().toUpperCase());
-        }
-        buttonFocusMode.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (menuFocusMode.getVisibility() == View.VISIBLE){
-                    // menu is visible. Toggle it off
-                    animator.fadeOut(menuFocusMode);
-                    isButtonFocusModeClicked = false;
-                } else {
-                    // menu is invisible. Toggle it on
-                    animator.fadeIn(menuFocusMode);
-                    isButtonFocusModeClicked = true;
-                }
-            }
-        });
-
-
-
-        // set button_focus_mode_macro if supported
-        if (mCameraParameters.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_MACRO)){
-            System.out.println("Macro supported");
-            Button buttonFocusModeMacro = (Button) findViewById(R.id.button_focus_mode_macro);
-            buttonFocusModeMacro.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    System.out.println("Macro");
-                    mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
-                    mCamera.setParameters(mCameraParameters);
-                    buttonFocusMode.setText(mCameraParameters.getFocusMode().toUpperCase());
-                    mediaActionSound.load(MediaActionSound.START_VIDEO_RECORDING); // preload the sample
-                    mCamera.autoFocus(autoFocusCallback);
-                    // menu is visible. Toggle it off
-                    menuFocusMode.setVisibility(View.INVISIBLE);
-                    isButtonFocusModeClicked = false;
-                }
-            });
-        }
-
-
-
-        // set button_focus_mode_inf if supported. Do not call autofocus in this mode
-        if (mCameraParameters.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_INFINITY)){
-            System.out.println("Infinity supported");
-            Button buttonFocusModeInf = (Button) findViewById(R.id.button_focus_mode_inf);
-            buttonFocusModeInf.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    System.out.println("Inf");
-                    mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY);
-                    mCamera.setParameters(mCameraParameters);
-                    buttonFocusMode.setText("INF");
-                    // menu is visible. Toggle it off
-                    menuFocusMode.setVisibility(View.INVISIBLE);
-                    isButtonFocusModeClicked = false;
-                }
-            });
-        }
-
-
-
-        // set button_focus_mode_auto
-        if (mCameraParameters.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO)){
-            Button buttonFocusModeAuto = (Button) findViewById(R.id.button_focus_mode_auto);
-            buttonFocusModeAuto.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    System.out.println("Auto");
-                    mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-                    mCamera.setParameters(mCameraParameters);
-                    mediaActionSound.load(MediaActionSound.START_VIDEO_RECORDING); // preload the sample
-                    mCamera.autoFocus(autoFocusCallback);
-                    buttonFocusMode.setText(mCameraParameters.getFocusMode().toUpperCase());
-                    // menu is visible. Toggle it off
-                    menuFocusMode.setVisibility(View.INVISIBLE);
-                    isButtonFocusModeClicked = false;
-                }
-            });
-        }
-
-
-
-        // focus touching the preview
-        FrameLayout cameraPreview = (FrameLayout) findViewById(R.id.camera_preview);
-        cameraPreview.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-
-                // only available in
-                /*The Rect field in a Camera.Area object describes a
-                rectangular shape mapped on a 2000 x 2000 unit grid.
-                The coordinates -1000, -1000 represent the top, left corner of the camera image,
-                and coordinates 1000, 1000 represent the bottom,
-                right corner of the camera image, as shown in the illustration below.
-                https://developer.android.com/guide/topics/media/images/camera-area-coordinates.png
-                 */
-                int xRect = (int) ((event.getX() / v.getWidth() * 2000)-1000);
-                int yRect = (int) ((event.getY() / v.getHeight() * 2000)-1000);
-
-                System.out.println("getX, getY: " + event.getX() + ", " + event.getY());
-                System.out.println("xRect, yRect: " + xRect + ", " + yRect);
-
-                // make sure the rect it's inside the allowed range
-                if (xRect < (-1000 + (focusAreaSize / 2 ))) xRect = (-1000 + (focusAreaSize / 2));
-                if (xRect > (1000 - (focusAreaSize / 2 ))) xRect = (1000 - (focusAreaSize / 2 ));
-                if (yRect < (-1000 + (focusAreaSize / 2 ))) yRect = (-1000 + (focusAreaSize / 2));
-                if (yRect > (1000 - (focusAreaSize / 2 ))) yRect = (1000 - (focusAreaSize / 2 ));
-
-                Rect focusAreaRect = new Rect(xRect - focusAreaSize / 2, yRect - focusAreaSize / 2,
-                        xRect + focusAreaSize / 2, yRect + focusAreaSize / 2);
-                List<Camera.Area> focusAreasList = new ArrayList<>();
-                focusAreasList.add(new Camera.Area(focusAreaRect, 1000));
-                mCameraParameters.setFocusAreas(focusAreasList);
-                mCamera.setParameters(mCameraParameters);
-
-                if ((mCameraParameters.getFocusMode() == Camera.Parameters.FOCUS_MODE_AUTO) ||
-                        (mCameraParameters.getFocusMode() == Camera.Parameters.FOCUS_MODE_MACRO)){
-                    System.out.println("autofocus");
-                    mCamera.autoFocus(autoFocusCallback);
-                }
-
-                return false;
-            }
-        });
-
-
-
-
-
-
-
-        // button_iso
-        Button buttonGetIso = (Button) findViewById(R.id.button_iso);
-        buttonGetIso.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (menuViewVisible && (whoIsUsingTheMenuView == v)) {
-                    // toggle OFF
-                    animator.fadeOut(spinner);
-                    menuViewVisible = false;
-                    whoIsUsingTheMenuView = null;
-                    setFullscreen();
-                } else {
-                    // toggle ON
-                    whoIsUsingTheMenuView = v;
-                    menuViewVisible = true;
-
-
-                    // get the iso_values as string[]
-                    final String[] iso_values = mCameraParameters.get("iso-values").split(",");
-                    //convert it to ArrayList
-                    final ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(iso_values));
-                    // fill the menuView
-                    fillViewMenu(arrayList);
-
-                    String currentValueString = mCameraParameters.get("iso");
-                    //find current value index
-                    int currentValueInt = arrayList.indexOf(currentValueString);
-                    System.out.println("currentValueString " + currentValueString + "   -   currentValueInt: " + currentValueInt);
-                    // select from menuView to match current value
-                    spinner.setSelection(currentValueInt, true);
-
-                    // show the menuView
-                    animator.fadeIn(spinner);
-
-                    // set a onItemSelectListener for the menuView
-                    spinner.setOnItemSelectedListener(null); // null the listener in case it's already assigned
-                    spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                        @Override
-                        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-                            mCameraParameters.set("iso", iso_values[position]);
-                            mCamera.setParameters(mCameraParameters);
-                            setFullscreen();
-
-                        }
-
-
-
-                        @Override
-                        public void onNothingSelected(AdapterView<?> parent) {
-
-                        }
-                    });
-
-                }
-            }
-        });
-
-
-
-
-
-
-        // button_scene_mode
-        Button buttonSceneMode = (Button) findViewById(R.id.button_scene_mode);
-        buttonSceneMode.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (menuViewVisible && (whoIsUsingTheMenuView == v)) {
-                    // toggle OFF
-                    animator.fadeOut(spinner);
-                    menuViewVisible = false;
-                    whoIsUsingTheMenuView = null;
-                    setFullscreen();
-                } else {
-                    // toggle ON
-                    whoIsUsingTheMenuView = v;
-                    menuViewVisible = true;
-
-
-                    // get the iso_values as string[]
-                    final String[] supportedSceneModeValues = mCameraParameters.get("scene-mode-values").split(",");
-                    //convert it to ArrayList
-                    final ArrayList<String> sceneModesValues= new ArrayList<>(Arrays.asList(supportedSceneModeValues));
-                    // fill the menuView
-                    fillViewMenu(sceneModesValues);
-
-                    //get current value index
-                    int currentValueIndex = sceneModesValues.indexOf(mCameraParameters.get("scene-mode"));
-
-                    // set menuView to current value
-                    spinner.setSelection(currentValueIndex, false);
-
-                    animator.fadeIn(spinner);
-                    spinner.setOnItemSelectedListener(null);
-                    //hasSpinnerJustBeenFired = true;
-                    spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                        @Override
-                        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                            mCameraParameters.set("scene-mode", supportedSceneModeValues[position]);
-                            mCamera.setParameters(mCameraParameters);
-                            setFullscreen();
-                            System.out.println("Scene set to: " + mCameraParameters.get("scene-mode"));
-                        }
-
-                        @Override
-                        public void onNothingSelected(AdapterView<?> parent) {
-                            System.out.println("No scene selected");
-                        }
-                    });
-                }
-
-            }
-        });
-
-
-        final Button buttonZSL = (Button) findViewById(R.id.button_zsl);
-        buttonZSL.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (buttonZSL.getText() == "ZSL\nON") {
-                    //toggle off
-                    mCameraParameters.set("zsl", "off");
-                    mCamera.setParameters(mCameraParameters);
-                    buttonZSL.setText("ZSL\nOFF");
-                } else {
-                    //toggle on
-                    mCameraParameters.set("zsl", "on");
-                    mCamera.setParameters(mCameraParameters);
-                    buttonZSL.setText("ZSL\nON");
-                }
-            }
-        });
-
-
-        // toggle howManyPictures +1 +10 menu
-        final RelativeLayout menuPictureCount = (RelativeLayout) findViewById(R.id.menu_picture_count);
-        menuPictureCount.setVisibility(View.INVISIBLE);
-        final Button buttonHowManyPictures = (Button) findViewById(R.id.button_howManyPictures);
-        buttonHowManyPictures.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                System.out.println("buttonHowManyPictures.setOnClickListener");
-                if (menuPictureCount.getVisibility() == View.VISIBLE) {
-                    //toggle off
-                    animator.fadeOut(menuPictureCount);
-                } else {
-                    // toggle on
-                    animator.fadeIn(menuPictureCount);
-                }
-            }
-        });
-
-        // reset howManyPictures
-        buttonHowManyPictures.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                buttonHowManyPictures.setText("0");
-                return true;
-            }
-        });
-
-        // button_plus_one
-        Button buttonPlusOne = (Button) findViewById(R.id.button_plus_one);
-        buttonPlusOne.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int picturesLeftToTake = Integer.parseInt(buttonHowManyPictures.getText().toString());
-                picturesLeftToTake++;
-                buttonHowManyPictures.setText(String.valueOf(picturesLeftToTake));
-            }
-        });
-
-        // button_plus_ten
-        Button buttonPlusTen = (Button) findViewById(R.id.button_plus_ten);
-        buttonPlusTen.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int picturesLeftToTake = Integer.parseInt(buttonHowManyPictures.getText().toString());
-                picturesLeftToTake+=10;
-                buttonHowManyPictures.setText(String.valueOf(picturesLeftToTake));
-            }
-        });
-
-        // button_flash_mode
-        final Button buttonFlashMode = (Button) findViewById(R.id.button_flash_mode);
-        final RelativeLayout menuFlashMode = (RelativeLayout) findViewById(R.id.menu_flash_mode);
-        menuFlashMode.setVisibility(View.INVISIBLE);
-        // set button_flash_mode text
-        buttonFlashMode.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                buttonFlashMode.setText("Flash\n" + mCameraParameters.get("flash-mode").toUpperCase());
-                if (menuFlashMode.getVisibility() == View.VISIBLE){
-                    //toggle off
-                    animator.fadeOut(menuFlashMode);
-                } else {
-                    // toggle on
-                    animator.fadeIn(menuFlashMode);
-                }
-            }
-        });
-
-        // button_flash_off
-        Button buttonFlashOff = (Button) findViewById(R.id.button_flash_off);
-        buttonFlashOff.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mCameraParameters.set("flash-mode", "off");
-                mCamera.setParameters(mCameraParameters);
-                buttonFlashMode.performClick();
-            }
-        });
-
-        // button_flash_on
-        Button buttonFlashOn = (Button) findViewById(R.id.button_flash_on);
-        buttonFlashOn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mCameraParameters.set("flash-mode", "on");
-                mCamera.setParameters(mCameraParameters);
-                buttonFlashMode.performClick();
-            }
-        });
-
-        // button_flash_auto
-        Button buttonFlashAuto = (Button) findViewById(R.id.button_flash_auto);
-        buttonFlashAuto.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mCameraParameters.set("flash-mode", "auto");
-                mCamera.setParameters(mCameraParameters);
-                buttonFlashMode.performClick();
-            }
-        });
-
-        // button_flash_torch
-        Button buttonFlashTorch = (Button) findViewById(R.id.button_flash_torch);
-        buttonFlashTorch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mCameraParameters.set("flash-mode", "torch");
-                mCamera.setParameters(mCameraParameters);
-                buttonFlashMode.performClick();
-            }
-        });
-
-        final SeekBar seekBarZoom = (SeekBar) findViewById(R.id.seekbar_zoom);
-        final TextView textViewZoom = (TextView) findViewById(R.id.text_view_zoom);
-        // get how many steps
-        List zoomRatiosList = mCameraParameters.getZoomRatios();
-
-        if (zoomRatiosList != null) {
-            int steps = zoomRatiosList.size();
-            System.out.println("Zoom steps: " + steps);
-            System.out.println("getMaxZoom: " + mCameraParameters.getMaxZoom());
-            // set max
-            seekBarZoom.setMax(steps - 1);
-            // set step
-            seekBarZoom.incrementProgressBy(1);
-            // setListener
-            seekBarZoom.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    mCameraParameters.setZoom(progress);
-                    mCamera.setParameters(mCameraParameters);
-                    if (fromUser) {
-                        System.out.println("seekBar from user: " + progress);
-                    } else {
-                        System.out.println("seekBar from code: " + progress);
-                    }
-
-                    animator.tempTextView(textViewZoom, String.valueOf(progress));
-
-                }
-
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {
-
-                }
-
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {
-
-                }
-            });
-        }
-
-
-
-
-        // butttonZoomPlus
-        Button buttonZoomPlus = (Button) findViewById(R.id.button_zoom_plus);
-        buttonZoomPlus.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                seekBarZoom.setProgress((seekBarZoom.getProgress() + 1));
-            }
-        });
-
-        // buttonZoomMinus
-        Button buttonZoomMinus = (Button) findViewById(R.id.button_zoom_minus);
-        buttonZoomMinus.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                seekBarZoom.setProgress((seekBarZoom.getProgress() - 1));
-            }
-        });
-
-
-
-        // end of set listeners --------------------------------------------------------------------
-    }
+//    private void setListeners(){
+//
+//        final Camera.Parameters mCameraParameters = mCamera.getParameters();
+//        final Spinner spinner = (Spinner) findViewById(R.id.spinner);
+//
+//
+//
+//        /*
+//        When it starts in AUTO the autoFocus doesnt seem to work
+//        Camera is very hot though. Check again with cool phone
+//         */
+//        mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
+//        mCamera.setParameters(mCameraParameters);
+//
+//
+//
+//        // Add a listener to the button_capture
+//
+//
+//        final ImageButton buttonCapture = (ImageButton) findViewById(R.id.button_capture);
+//        buttonCapture.setOnClickListener(
+//                new View.OnClickListener() {
+//                    @Override
+//                    public void onClick(View v) {
+//                        isPictureSequenceEnabled = false;
+//                        takePicture();
+//
+//                    }
+//                }
+//        );
+//
+//        buttonCapture.setOnLongClickListener(new View.OnLongClickListener() {
+//            @Override
+//            public boolean onLongClick(View v) {
+//                System.out.println("OnLongClick");
+//                countDown();
+//
+//                return true;
+//            }
+//        });
+//
+//
+//
+//
+//
+//        // Add listener to button_focus_mode
+//        final RelativeLayout menuFocusMode = (RelativeLayout) findViewById(R.id.menu_focus_mode);
+//        final Button buttonFocusMode = (Button) findViewById(R.id.button_focus_mode);
+//        if (mCameraParameters.getFocusMode() == Camera.Parameters.FOCUS_MODE_INFINITY){
+//            buttonFocusMode.setText("INF");
+//        } else {
+//            buttonFocusMode.setText(mCameraParameters.getFocusMode().toUpperCase());
+//        }
+//        buttonFocusMode.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                if (menuFocusMode.getVisibility() == View.VISIBLE){
+//                    // menu is visible. Toggle it off
+//                    animator.fadeOut(menuFocusMode);
+//                    isButtonFocusModeClicked = false;
+//                } else {
+//                    // menu is invisible. Toggle it on
+//                    animator.fadeIn(menuFocusMode);
+//                    isButtonFocusModeClicked = true;
+//                }
+//            }
+//        });
+//
+//
+//
+//        // set button_focus_mode_macro if supported
+//        if (mCameraParameters.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_MACRO)){
+//            System.out.println("Macro supported");
+//            Button buttonFocusModeMacro = (Button) findViewById(R.id.button_focus_mode_macro);
+//            buttonFocusModeMacro.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    System.out.println("Macro");
+//                    mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
+//                    mCamera.setParameters(mCameraParameters);
+//                    buttonFocusMode.setText(mCameraParameters.getFocusMode().toUpperCase());
+//                    mediaActionSound.load(MediaActionSound.START_VIDEO_RECORDING); // preload the sample
+//                    mCamera.autoFocus(autoFocusCallback);
+//                    // menu is visible. Toggle it off
+//                    menuFocusMode.setVisibility(View.INVISIBLE);
+//                    isButtonFocusModeClicked = false;
+//                }
+//            });
+//        }
+//
+//
+//
+//        // set button_focus_mode_inf if supported. Do not call autofocus in this mode
+//        if (mCameraParameters.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_INFINITY)){
+//            System.out.println("Infinity supported");
+//            Button buttonFocusModeInf = (Button) findViewById(R.id.button_focus_mode_inf);
+//            buttonFocusModeInf.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    System.out.println("Inf");
+//                    mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY);
+//                    mCamera.setParameters(mCameraParameters);
+//                    buttonFocusMode.setText("INF");
+//                    // menu is visible. Toggle it off
+//                    menuFocusMode.setVisibility(View.INVISIBLE);
+//                    isButtonFocusModeClicked = false;
+//                }
+//            });
+//        }
+//
+//
+//
+//        // set button_focus_mode_auto
+//        if (mCameraParameters.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO)){
+//            Button buttonFocusModeAuto = (Button) findViewById(R.id.button_focus_mode_auto);
+//            buttonFocusModeAuto.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    System.out.println("Auto");
+//                    mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+//                    mCamera.setParameters(mCameraParameters);
+//                    mediaActionSound.load(MediaActionSound.START_VIDEO_RECORDING); // preload the sample
+//                    mCamera.autoFocus(autoFocusCallback);
+//                    buttonFocusMode.setText(mCameraParameters.getFocusMode().toUpperCase());
+//                    // menu is visible. Toggle it off
+//                    menuFocusMode.setVisibility(View.INVISIBLE);
+//                    isButtonFocusModeClicked = false;
+//                }
+//            });
+//        }
+//
+//
+//
+//        // focus touching the preview
+//        FrameLayout cameraPreview = (FrameLayout) findViewById(R.id.camera_preview);
+//        cameraPreview.setOnTouchListener(new View.OnTouchListener() {
+//            @Override
+//            public boolean onTouch(View v, MotionEvent event) {
+//
+//                // only available in
+//                /*The Rect field in a Camera.Area object describes a
+//                rectangular shape mapped on a 2000 x 2000 unit grid.
+//                The coordinates -1000, -1000 represent the top, left corner of the camera image,
+//                and coordinates 1000, 1000 represent the bottom,
+//                right corner of the camera image, as shown in the illustration below.
+//                https://developer.android.com/guide/topics/media/images/camera-area-coordinates.png
+//                 */
+//                int xRect = (int) ((event.getX() / v.getWidth() * 2000)-1000);
+//                int yRect = (int) ((event.getY() / v.getHeight() * 2000)-1000);
+//
+//                System.out.println("getX, getY: " + event.getX() + ", " + event.getY());
+//                System.out.println("xRect, yRect: " + xRect + ", " + yRect);
+//
+//                // make sure the rect it's inside the allowed range
+//                if (xRect < (-1000 + (focusAreaSize / 2 ))) xRect = (-1000 + (focusAreaSize / 2));
+//                if (xRect > (1000 - (focusAreaSize / 2 ))) xRect = (1000 - (focusAreaSize / 2 ));
+//                if (yRect < (-1000 + (focusAreaSize / 2 ))) yRect = (-1000 + (focusAreaSize / 2));
+//                if (yRect > (1000 - (focusAreaSize / 2 ))) yRect = (1000 - (focusAreaSize / 2 ));
+//
+//                Rect focusAreaRect = new Rect(xRect - focusAreaSize / 2, yRect - focusAreaSize / 2,
+//                        xRect + focusAreaSize / 2, yRect + focusAreaSize / 2);
+//                List<Camera.Area> focusAreasList = new ArrayList<>();
+//                focusAreasList.add(new Camera.Area(focusAreaRect, 1000));
+//                mCameraParameters.setFocusAreas(focusAreasList);
+//                mCamera.setParameters(mCameraParameters);
+//
+//                if ((mCameraParameters.getFocusMode() == Camera.Parameters.FOCUS_MODE_AUTO) ||
+//                        (mCameraParameters.getFocusMode() == Camera.Parameters.FOCUS_MODE_MACRO)){
+//                    System.out.println("autofocus");
+//                    mCamera.autoFocus(autoFocusCallback);
+//                }
+//
+//                return false;
+//            }
+//        });
+//
+//
+//
+//
+//
+//
+//
+//        // button_iso
+//        Button buttonGetIso = (Button) findViewById(R.id.button_iso);
+//        buttonGetIso.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                if (menuViewVisible && (whoIsUsingTheMenuView == v)) {
+//                    // toggle OFF
+//                    animator.fadeOut(spinner);
+//                    menuViewVisible = false;
+//                    whoIsUsingTheMenuView = null;
+//                    setFullscreen();
+//                } else {
+//                    // toggle ON
+//                    whoIsUsingTheMenuView = v;
+//                    menuViewVisible = true;
+//
+//
+//                    // get the iso_values as string[]
+//                    final String[] iso_values = mCameraParameters.get("iso-values").split(",");
+//                    //convert it to ArrayList
+//                    final ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(iso_values));
+//                    // fill the menuView
+//                    fillViewMenu(arrayList);
+//
+//                    String currentValueString = mCameraParameters.get("iso");
+//                    //find current value index
+//                    int currentValueInt = arrayList.indexOf(currentValueString);
+//                    System.out.println("currentValueString " + currentValueString + "   -   currentValueInt: " + currentValueInt);
+//                    // select from menuView to match current value
+//                    spinner.setSelection(currentValueInt, true);
+//
+//                    // show the menuView
+//                    animator.fadeIn(spinner);
+//
+//                    // set a onItemSelectListener for the menuView
+//                    spinner.setOnItemSelectedListener(null); // null the listener in case it's already assigned
+//                    spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+//                        @Override
+//                        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+//
+//                            mCameraParameters.set("iso", iso_values[position]);
+//                            mCamera.setParameters(mCameraParameters);
+//                            setFullscreen();
+//
+//                        }
+//
+//
+//
+//                        @Override
+//                        public void onNothingSelected(AdapterView<?> parent) {
+//
+//                        }
+//                    });
+//
+//                }
+//            }
+//        });
+//
+//
+//
+//
+//
+//
+//        // button_scene_mode
+//        Button buttonSceneMode = (Button) findViewById(R.id.button_scene_mode);
+//        buttonSceneMode.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                if (menuViewVisible && (whoIsUsingTheMenuView == v)) {
+//                    // toggle OFF
+//                    animator.fadeOut(spinner);
+//                    menuViewVisible = false;
+//                    whoIsUsingTheMenuView = null;
+//                    setFullscreen();
+//                } else {
+//                    // toggle ON
+//                    whoIsUsingTheMenuView = v;
+//                    menuViewVisible = true;
+//
+//
+//                    // get the iso_values as string[]
+//                    final String[] supportedSceneModeValues = mCameraParameters.get("scene-mode-values").split(",");
+//                    //convert it to ArrayList
+//                    final ArrayList<String> sceneModesValues= new ArrayList<>(Arrays.asList(supportedSceneModeValues));
+//                    // fill the menuView
+//                    fillViewMenu(sceneModesValues);
+//
+//                    //get current value index
+//                    int currentValueIndex = sceneModesValues.indexOf(mCameraParameters.get("scene-mode"));
+//
+//                    // set menuView to current value
+//                    spinner.setSelection(currentValueIndex, false);
+//
+//                    animator.fadeIn(spinner);
+//                    spinner.setOnItemSelectedListener(null);
+//                    //hasSpinnerJustBeenFired = true;
+//                    spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+//                        @Override
+//                        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+//                            mCameraParameters.set("scene-mode", supportedSceneModeValues[position]);
+//                            mCamera.setParameters(mCameraParameters);
+//                            setFullscreen();
+//                            System.out.println("Scene set to: " + mCameraParameters.get("scene-mode"));
+//                        }
+//
+//                        @Override
+//                        public void onNothingSelected(AdapterView<?> parent) {
+//                            System.out.println("No scene selected");
+//                        }
+//                    });
+//                }
+//
+//            }
+//        });
+//
+//
+//        final Button buttonZSL = (Button) findViewById(R.id.button_zsl);
+//        buttonZSL.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                if (buttonZSL.getText() == "ZSL\nON") {
+//                    //toggle off
+//                    mCameraParameters.set("zsl", "off");
+//                    mCamera.setParameters(mCameraParameters);
+//                    buttonZSL.setText("ZSL\nOFF");
+//                } else {
+//                    //toggle on
+//                    mCameraParameters.set("zsl", "on");
+//                    mCamera.setParameters(mCameraParameters);
+//                    buttonZSL.setText("ZSL\nON");
+//                }
+//            }
+//        });
+//
+//
+//        // toggle howManyPictures +1 +10 menu
+//        final RelativeLayout menuPictureCount = (RelativeLayout) findViewById(R.id.menu_picture_count);
+//        menuPictureCount.setVisibility(View.INVISIBLE);
+//        final Button buttonHowManyPictures = (Button) findViewById(R.id.button_howManyPictures);
+//        buttonHowManyPictures.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                System.out.println("buttonHowManyPictures.setOnClickListener");
+//                if (menuPictureCount.getVisibility() == View.VISIBLE) {
+//                    //toggle off
+//                    animator.fadeOut(menuPictureCount);
+//                } else {
+//                    // toggle on
+//                    animator.fadeIn(menuPictureCount);
+//                }
+//            }
+//        });
+//
+//        // reset howManyPictures
+//        buttonHowManyPictures.setOnLongClickListener(new View.OnLongClickListener() {
+//            @Override
+//            public boolean onLongClick(View v) {
+//                buttonHowManyPictures.setText("0");
+//                return true;
+//            }
+//        });
+//
+//        // button_plus_one
+//        Button buttonPlusOne = (Button) findViewById(R.id.button_plus_one);
+//        buttonPlusOne.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                int picturesLeftToTake = Integer.parseInt(buttonHowManyPictures.getText().toString());
+//                picturesLeftToTake++;
+//                buttonHowManyPictures.setText(String.valueOf(picturesLeftToTake));
+//            }
+//        });
+//
+//        // button_plus_ten
+//        Button buttonPlusTen = (Button) findViewById(R.id.button_plus_ten);
+//        buttonPlusTen.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                int picturesLeftToTake = Integer.parseInt(buttonHowManyPictures.getText().toString());
+//                picturesLeftToTake+=10;
+//                buttonHowManyPictures.setText(String.valueOf(picturesLeftToTake));
+//            }
+//        });
+//
+//        // button_flash_mode
+//        final Button buttonFlashMode = (Button) findViewById(R.id.button_flash_mode);
+//        final RelativeLayout menuFlashMode = (RelativeLayout) findViewById(R.id.menu_flash_mode);
+//        menuFlashMode.setVisibility(View.INVISIBLE);
+//        // set button_flash_mode text
+//        buttonFlashMode.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                buttonFlashMode.setText("Flash\n" + mCameraParameters.get("flash-mode").toUpperCase());
+//                if (menuFlashMode.getVisibility() == View.VISIBLE){
+//                    //toggle off
+//                    animator.fadeOut(menuFlashMode);
+//                } else {
+//                    // toggle on
+//                    animator.fadeIn(menuFlashMode);
+//                }
+//            }
+//        });
+//
+//        // button_flash_off
+//        Button buttonFlashOff = (Button) findViewById(R.id.button_flash_off);
+//        buttonFlashOff.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                mCameraParameters.set("flash-mode", "off");
+//                mCamera.setParameters(mCameraParameters);
+//                buttonFlashMode.performClick();
+//            }
+//        });
+//
+//        // button_flash_on
+//        Button buttonFlashOn = (Button) findViewById(R.id.button_flash_on);
+//        buttonFlashOn.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                mCameraParameters.set("flash-mode", "on");
+//                mCamera.setParameters(mCameraParameters);
+//                buttonFlashMode.performClick();
+//            }
+//        });
+//
+//        // button_flash_auto
+//        Button buttonFlashAuto = (Button) findViewById(R.id.button_flash_auto);
+//        buttonFlashAuto.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                mCameraParameters.set("flash-mode", "auto");
+//                mCamera.setParameters(mCameraParameters);
+//                buttonFlashMode.performClick();
+//            }
+//        });
+//
+//        // button_flash_torch
+//        Button buttonFlashTorch = (Button) findViewById(R.id.button_flash_torch);
+//        buttonFlashTorch.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                mCameraParameters.set("flash-mode", "torch");
+//                mCamera.setParameters(mCameraParameters);
+//                buttonFlashMode.performClick();
+//            }
+//        });
+//
+//        final SeekBar seekBarZoom = (SeekBar) findViewById(R.id.seekbar_zoom);
+//        final TextView textViewZoom = (TextView) findViewById(R.id.text_view_zoom);
+//        // get how many steps
+//        List zoomRatiosList = mCameraParameters.getZoomRatios();
+//
+//        if (zoomRatiosList != null) {
+//            int steps = zoomRatiosList.size();
+//            System.out.println("Zoom steps: " + steps);
+//            System.out.println("getMaxZoom: " + mCameraParameters.getMaxZoom());
+//            // set max
+//            seekBarZoom.setMax(steps - 1);
+//            // set step
+//            seekBarZoom.incrementProgressBy(1);
+//            // setListener
+//            seekBarZoom.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+//                @Override
+//                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+//                    mCameraParameters.setZoom(progress);
+//                    mCamera.setParameters(mCameraParameters);
+//                    if (fromUser) {
+//                        System.out.println("seekBar from user: " + progress);
+//                    } else {
+//                        System.out.println("seekBar from code: " + progress);
+//                    }
+//
+//                    animator.tempTextView(textViewZoom, String.valueOf(progress));
+//
+//                }
+//
+//                @Override
+//                public void onStartTrackingTouch(SeekBar seekBar) {
+//
+//                }
+//
+//                @Override
+//                public void onStopTrackingTouch(SeekBar seekBar) {
+//
+//                }
+//            });
+//        }
+//
+//
+//
+//
+//        // butttonZoomPlus
+//        Button buttonZoomPlus = (Button) findViewById(R.id.button_zoom_plus);
+//        buttonZoomPlus.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                seekBarZoom.setProgress((seekBarZoom.getProgress() + 1));
+//            }
+//        });
+//
+//        // buttonZoomMinus
+//        Button buttonZoomMinus = (Button) findViewById(R.id.button_zoom_minus);
+//        buttonZoomMinus.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                seekBarZoom.setProgress((seekBarZoom.getProgress() - 1));
+//            }
+//        });
+//
+//
+//
+//        // end of set listeners --------------------------------------------------------------------
+//    }
 
 
 

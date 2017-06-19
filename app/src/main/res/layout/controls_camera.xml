@@ -102,55 +102,7 @@
         android:layout_above="@+id/button_iso"
         android:layout_alignLeft="@id/button_iso"/>
 
-    <RelativeLayout
-        android:id="@+id/menu_flash_mode"
-        android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:layout_alignBottom="@+id/button_flash_mode"
-        android:layout_toRightOf="@+id/button_flash_mode"
-        android:layout_marginLeft="5dp"
-        android:visibility="invisible">
-        <Button
-            android:id="@+id/button_flash_auto"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="#afff"
-            android:text="Auto"
-            android:textColor="@color/colorPrimary"
-            />
-        <Button
-            android:id="@+id/button_flash_on"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="#afff"
-            android:text="ON"
-            android:textColor="@color/colorPrimary"
-            android:layout_toRightOf="@+id/button_flash_auto"
-            android:layout_marginLeft="5dp"/>
 
-        <Button
-            android:id="@+id/button_flash_off"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="#afff"
-            android:text="OFF"
-            android:textColor="@color/colorPrimary"
-            android:layout_toRightOf="@+id/button_flash_on"
-            android:layout_marginLeft="5dp"/>
-
-        <Button
-            android:id="@+id/button_flash_torch"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="#afff"
-            android:text="Torch"
-            android:textColor="@color/colorPrimary"
-            android:layout_toRightOf="@+id/button_flash_off"
-            android:layout_marginLeft="5dp"/>
-
-
-
-    </RelativeLayout>
 
     <Button
         android:id="@+id/button_howManyPictures"
@@ -191,47 +143,6 @@
 
 
 
-    <RelativeLayout
-        android:id="@+id/menu_focus_mode"
-        android:layout_width="200dp"
-        android:layout_height="50dp"
-        android:layout_toRightOf="@id/button_focus_mode"
-        android:layout_alignBottom="@id/button_focus_mode"
-        android:visibility="invisible">
-        <Button
-            android:id="@+id/button_focus_mode_auto"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="#afff"
-            android:text="Auto"
-            android:textColor="@color/colorPrimary"
-            android:layout_marginLeft="5dp"/>
-
-        <Button
-            android:id="@+id/button_focus_mode_macro"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="#afff"
-            android:text="Macro"
-            android:textColor="@color/colorPrimary"
-            android:layout_alignBottom="@+id/button_focus_mode_auto"
-            android:layout_toRightOf="@+id/button_focus_mode_auto"
-            android:layout_toEndOf="@+id/button_focus_mode_auto"
-            android:layout_marginLeft="5dp"/>
-
-        <Button
-            android:id="@+id/button_focus_mode_inf"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="#afff"
-            android:text="INF"
-            android:textColor="@color/colorPrimary"
-            android:layout_alignBottom="@+id/button_focus_mode_macro"
-            android:layout_toRightOf="@+id/button_focus_mode_macro"
-            android:layout_toEndOf="@+id/button_focus_mode_macro"
-            android:layout_marginLeft="5dp"/>
-
-    </RelativeLayout>
 
 
     <Button
