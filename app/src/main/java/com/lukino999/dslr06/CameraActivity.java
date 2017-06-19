@@ -3,6 +3,7 @@ package com.lukino999.dslr06;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
+import android.graphics.Rect;
 import android.hardware.Camera;
 import android.media.MediaActionSound;
 import android.net.Uri;
@@ -15,6 +16,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -22,7 +24,9 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,6 +39,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import static android.content.ContentValues.TAG;
@@ -449,7 +454,7 @@ public class CameraActivity extends AppCompatActivity {
     Update menu with values returned by CameraParameters.get(keyAvailableValues)
     If menu is already up, whoIsCalling tells whether to toggle off or update
      */
-    private void updateMenu(int i, TextView whoIsCalling){
+    private void updateValuesMenu(final int i, final TextView whoIsCalling){
 
         final String keyAvailableValues = cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.AVAILABLE_VALUES).toString();
         final String keyCurrentValue = cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.VALUE).toString();
@@ -478,7 +483,7 @@ public class CameraActivity extends AppCompatActivity {
                 //convert it to ArrayList
                 final ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(availableValues));
                 // fill the menuView
-                fillViewMenu(arrayList);
+                fillValuesMenu(arrayList);
 
 
                 String currentValueString = mCameraParameters.get(keyCurrentValue);
@@ -492,10 +497,12 @@ public class CameraActivity extends AppCompatActivity {
                 menuView.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                     @Override
                     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                        log("menuView.OnItemClick:: pos: " + position);
-                        log("View: " + view);
+                        log(" mainMenu.setOnItemSelectedListener");
+                        view.getFocusables(position);
+                        view.setSelected(true);
                         mCameraParameters.set(keyCurrentValue, availableValues[position]);
                         mCamera.setParameters(mCameraParameters);
+                        setMenuItemLable(whoIsCalling, i);
                     }
 
                     @Override
@@ -537,31 +544,21 @@ public class CameraActivity extends AppCompatActivity {
         menuView = (Spinner) findViewById(R.id.spinner);
 
 
-        /*
+
         initializeButtonCapture();
 
         initializeCameraPreviewAutofocus();
 
-        initializeButtonISO();
-
-        initializeButtonSceneMode();
-
-        initializeButtonFocus();
-
-        initializeButtonFlash();
-
         initializeButtonHowManyPictures();
 
-*/
-
-        fillTheMainMenu();
+        populateMainMenu();
 
     }
 
     final CameraFunctionsList cameraFunctionsList = new CameraFunctionsList();
 
 
-    private void fillTheMainMenu() {
+    private void populateMainMenu() {
 
         final ListView mainMenu = (ListView) findViewById(R.id.list_view_main_menu);
         ArrayList<String> functionsArrayList = new ArrayList<>();
@@ -615,7 +612,7 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 log("onClick:: " + keyCurrentValue);
-                updateMenu(i, (TextView) v);
+                updateValuesMenu(i, (TextView) v);
             }
         });
     }
@@ -639,7 +636,7 @@ public class CameraActivity extends AppCompatActivity {
 
 
 
-    /*
+
 
     private void initializeButtonHowManyPictures() {
         final RelativeLayout menuPictureCount = (RelativeLayout) findViewById(R.id.menu_picture_count);
@@ -690,17 +687,6 @@ public class CameraActivity extends AppCompatActivity {
 
     }
 
-    private void initializeButtonFlash() {
-        Button button = (Button) findViewById(R.id.button_flash_mode);
-        initializeButton(button, "flash-mode-values", "flash-mode");
-    }
-
-    private void initializeButtonFocus() {
-        Button button = (Button) findViewById(R.id.button_focus_mode);
-        initializeButton(button, "focus-mode-values", "focus-mode");
-    }
-
-
     private void initializeButtonCapture() {
 
         final ImageButton buttonCapture = (ImageButton) findViewById(R.id.button_capture);
@@ -738,13 +724,13 @@ public class CameraActivity extends AppCompatActivity {
                 log("cameraPreview.OnTouch");
 
                 // only available in
-                *//*The Rect field in a Camera.Area object describes a
+                /*The Rect field in a Camera.Area object describes a
                 rectangular shape mapped on a 2000 x 2000 unit grid.
                 The coordinates -1000, -1000 represent the top, left corner of the camera image,
                 and coordinates 1000, 1000 represent the bottom,
                 right corner of the camera image, as shown in the illustration below.
                 https://developer.android.com/guide/topics/media/images/camera-area-coordinates.png
-                 *//*
+                */
                 int xRect = (int) ((event.getX() / v.getWidth() * 2000)-1000);
                 int yRect = (int) ((event.getY() / v.getHeight() * 2000)-1000);
 
@@ -780,25 +766,6 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
     }
-
-    private void initializeButtonISO() {
-
-        Button buttonGetIso = (Button) findViewById(R.id.button_iso);
-
-        initializeButton(buttonGetIso, "iso-values", "iso");
-
-    }
-
-    private void initializeButtonSceneMode() {
-        Button button = (Button) findViewById(R.id.button_scene_mode);
-        initializeButton(button, "scene-mode-values", "scene-mode");
-    }
-
-*/
-
-//                 cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.AVAILABLE_VALUES).toString(),
-//                            cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.VALUE).toString()
-
 
 
 
@@ -1066,7 +1033,7 @@ public class CameraActivity extends AppCompatActivity {
 //                    //convert it to ArrayList
 //                    final ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(iso_values));
 //                    // fill the menuView
-//                    fillViewMenu(arrayList);
+//                    fillValuesMenu(arrayList);
 //
 //                    String currentValueString = mCameraParameters.get("iso");
 //                    //find current value index
@@ -1129,7 +1096,7 @@ public class CameraActivity extends AppCompatActivity {
 //                    //convert it to ArrayList
 //                    final ArrayList<String> sceneModesValues= new ArrayList<>(Arrays.asList(supportedSceneModeValues));
 //                    // fill the menuView
-//                    fillViewMenu(sceneModesValues);
+//                    fillValuesMenu(sceneModesValues);
 //
 //                    //get current value index
 //                    int currentValueIndex = sceneModesValues.indexOf(mCameraParameters.get("scene-mode"));
@@ -1369,13 +1336,27 @@ public class CameraActivity extends AppCompatActivity {
         mCamera.takePicture(null, null, mPicture);
     }
 
-    private void fillViewMenu(ArrayList<String> arrayList){
+    private void fillValuesMenu(ArrayList<String> arrayList){
 
         Spinner menuView = (Spinner) findViewById(R.id.spinner);
         ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, arrayList);
         menuView.setAdapter(arrayAdapter);
 
     }
+
+
+
+    /*
+    private void fillValuesMenu(ArrayList<String> arrayList){
+
+        Spinner menuView = (Spinner) findViewById(R.id.spinner);
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, arrayList);
+        menuView.setAdapter(arrayAdapter);
+
+    }
+
+     */
+
 
     private int countDown = 3;
     private void countDown() {

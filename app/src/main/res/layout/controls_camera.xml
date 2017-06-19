@@ -8,7 +8,18 @@
         android:id="@+id/list_view_main_menu"
         android:layout_width="200dp"
         android:layout_height="match_parent"
-        android:background="@color/menuBackgroud"></ListView>
+        android:background="@color/menuBackgroud"
+        android:choiceMode="singleChoice"
+        android:listSelector="@android:color/darker_gray"></ListView>
+    <ListView
+        android:id="@+id/list_view_values_menu"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toRightOf="@id/list_view_main_menu"
+        android:background="@color/menuBackgroud"
+        android:layout_marginLeft="5dp">
+    </ListView>
 
 
     <TextView
