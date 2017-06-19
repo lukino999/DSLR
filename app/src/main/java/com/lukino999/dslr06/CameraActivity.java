@@ -3,7 +3,6 @@ package com.lukino999.dslr06;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
-import android.graphics.Rect;
 import android.hardware.Camera;
 import android.media.MediaActionSound;
 import android.net.Uri;
@@ -16,7 +15,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -24,10 +22,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.ImageButton;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
-import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,7 +35,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
+import java.util.Map;
 
 import static android.content.ContentValues.TAG;
 
@@ -454,8 +449,14 @@ public class CameraActivity extends AppCompatActivity {
     Update menu with values returned by CameraParameters.get(keyAvailableValues)
     If menu is already up, whoIsCalling tells whether to toggle off or update
      */
-    private void updateMenu(String keyAvailableValues, final String keyCurrentValue, View whoIsCalling){
-        
+    private void updateMenu(int i, TextView whoIsCalling){
+
+        final String keyAvailableValues = cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.AVAILABLE_VALUES).toString();
+        final String keyCurrentValue = cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.VALUE).toString();
+        final String label = cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.LABEL).toString();
+
+
+
         if (mCameraParameters.get(keyAvailableValues) != null) {
             // ---------------------------------------------------------------------
             if (menuViewVisible && (whoIsUsingTheMenuView == whoIsCalling)) {
@@ -472,8 +473,6 @@ public class CameraActivity extends AppCompatActivity {
                 menuViewVisible = true;
                 // get the availableValues as string[]
                 final String[] availableValues = mCameraParameters.get(keyAvailableValues).split(",");
-//            final String[] availableValuesUppercase = availableValues;
-
 
 
                 //convert it to ArrayList
@@ -526,6 +525,7 @@ public class CameraActivity extends AppCompatActivity {
             }
             // ---------------------------------------------------------------------
         } else {
+            whoIsCalling.setText(label + ": not available");
             Toast.makeText(this, "Not availabe", Toast.LENGTH_SHORT).show();
         }
         
@@ -536,6 +536,8 @@ public class CameraActivity extends AppCompatActivity {
         mCameraParameters = mCamera.getParameters();
         menuView = (Spinner) findViewById(R.id.spinner);
 
+
+        /*
         initializeButtonCapture();
 
         initializeCameraPreviewAutofocus();
@@ -550,11 +552,94 @@ public class CameraActivity extends AppCompatActivity {
 
         initializeButtonHowManyPictures();
 
+*/
+
+        fillTheMainMenu();
+
+    }
+
+    final CameraFunctionsList cameraFunctionsList = new CameraFunctionsList();
+
+
+    private void fillTheMainMenu() {
+
+        final ListView mainMenu = (ListView) findViewById(R.id.list_view_main_menu);
+        ArrayList<String> functionsArrayList = new ArrayList<>();
+
+        // populate the functionsArrayList with the values in CameraFunctionList
+        for (Map m : cameraFunctionsList.availableFuntions){
+            log(m.toString());
+            functionsArrayList.add(m.get(cameraFunctionsList.LABEL).toString());
+        }
+
+        // populate the mainMenu ListView
+        ArrayAdapter<String> arrayAdapter =
+                new ArrayAdapter<String>(getApplicationContext(),
+                        android.R.layout.simple_list_item_1,
+                        functionsArrayList);
+
+        mainMenu.setAdapter(arrayAdapter);
+
+
+        // once mainMenu is drawn, initialize each item
+        final ViewTreeObserver vto = mainMenu.getViewTreeObserver();
+        vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                vto.removeOnGlobalLayoutListener(this);
+
+                TextView mainMenuItem;
+
+                for (int i = 0; i < mainMenu.getChildCount(); i++){
+                    mainMenuItem = (TextView) mainMenu.getChildAt(i);
+                    initializeButton(mainMenuItem, i);
+                }
+
+            }
+        });
+
 
 
 
 
     }
+
+    // initialize button
+    private void initializeButton(TextView view, final int i ){
+
+        final String keyAvailableValues = cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.AVAILABLE_VALUES).toString();
+        final String keyCurrentValue = cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.VALUE).toString();
+
+        setMenuItemLable(view, i);
+        view.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                log("onClick:: " + keyCurrentValue);
+                updateMenu(i, (TextView) v);
+            }
+        });
+    }
+
+    private void setMenuItemLable(TextView view, final int i) {
+
+        final String keyCurrentValue = cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.VALUE).toString();
+        final String label = cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.LABEL).toString();
+        view.setText(label +": " + mCameraParameters.get(keyCurrentValue));
+
+    }
+
+    // log
+    private void log(String s) {
+        System.out.println(s);
+    }
+
+
+
+
+
+
+
+    /*
 
     private void initializeButtonHowManyPictures() {
         final RelativeLayout menuPictureCount = (RelativeLayout) findViewById(R.id.menu_picture_count);
@@ -653,13 +738,13 @@ public class CameraActivity extends AppCompatActivity {
                 log("cameraPreview.OnTouch");
 
                 // only available in
-                /*The Rect field in a Camera.Area object describes a
+                *//*The Rect field in a Camera.Area object describes a
                 rectangular shape mapped on a 2000 x 2000 unit grid.
                 The coordinates -1000, -1000 represent the top, left corner of the camera image,
                 and coordinates 1000, 1000 represent the bottom,
                 right corner of the camera image, as shown in the illustration below.
                 https://developer.android.com/guide/topics/media/images/camera-area-coordinates.png
-                 */
+                 *//*
                 int xRect = (int) ((event.getX() / v.getWidth() * 2000)-1000);
                 int yRect = (int) ((event.getY() / v.getHeight() * 2000)-1000);
 
@@ -709,23 +794,10 @@ public class CameraActivity extends AppCompatActivity {
         initializeButton(button, "scene-mode-values", "scene-mode");
     }
 
+*/
 
-
-    // initialize button
-    private void initializeButton(View button, final String keyAvailableValues, final String keyCurrentValue ){
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                log("onClick:: " + keyCurrentValue);
-                updateMenu(keyAvailableValues, keyCurrentValue, v);
-            }
-        });
-    }
-
-    // log
-    private void log(String s) {
-        System.out.println(s);
-    }
+//                 cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.AVAILABLE_VALUES).toString(),
+//                            cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.VALUE).toString()
 
 
 
