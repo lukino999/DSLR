@@ -17,6 +17,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
+import android.view.SoundEffectConstants;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -63,12 +64,20 @@ public class CameraActivity extends AppCompatActivity {
     boolean menuViewVisible = false;
     int focusAreaSize = 200;
     MyAnimator animator = new MyAnimator();
+
     Camera.AutoFocusCallback autoFocusCallback = new Camera.AutoFocusCallback() {
         @Override
         public void onAutoFocus(boolean success, Camera camera) {
             log("Autofocus has been successful: " + success);
+            if (success) {
+                mediaActionSound.play(MediaActionSound.FOCUS_COMPLETE);
+            } else {
+                mediaActionSound.play(MediaActionSound.STOP_VIDEO_RECORDING);
+            }
         }
     };
+
+
     private int countDown = 3;
     private View mContentView;
     private final Runnable mHidePart2Runnable = new Runnable() {
@@ -642,7 +651,7 @@ public class CameraActivity extends AppCompatActivity {
         final SeekBar seekBarZoom = (SeekBar) findViewById(R.id.seekbar_zoom);
         final TextView textViewZoom = (TextView) findViewById(R.id.text_view_zoom);
         // get how many steps
-        List zoomRatiosList = mCameraParameters.getZoomRatios();
+        final List zoomRatiosList = mCameraParameters.getZoomRatios();
 
         if (zoomRatiosList != null) {
             int steps = zoomRatiosList.size();
@@ -663,8 +672,8 @@ public class CameraActivity extends AppCompatActivity {
                     } else {
                         System.out.println("seekBar from code: " + progress);
                     }
-
-                    animator.tempTextView(textViewZoom, String.valueOf(progress));
+                    float zoomRatio = Float.valueOf(zoomRatiosList.get(progress).toString()) / 100;
+                    animator.tempTextView(textViewZoom, "x " + String.valueOf(zoomRatio));
 
                 }
 
