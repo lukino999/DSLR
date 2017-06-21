@@ -17,7 +17,6 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
-import android.view.SoundEffectConstants;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -31,8 +30,6 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import org.w3c.dom.Text;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -63,18 +60,34 @@ public class CameraActivity extends AppCompatActivity {
     LayoutInflater controlInflater = null;
     boolean menuViewVisible = false;
     int focusAreaSize = 200;
+    FocusAreaDrawable focusAreaDrawable;
+    private Rect focusAreaDrawableBounds;
+
     MyAnimator animator = new MyAnimator();
+
+    private Handler handler = new Handler();
+    private Runnable removeFocusRect = new Runnable() {
+        @Override
+        public void run() {
+            focusAreaDrawable.set(focusAreaDrawableBounds, 0x00000000);
+            focusAreaDrawable.invalidate();
+        }
+    };
 
     Camera.AutoFocusCallback autoFocusCallback = new Camera.AutoFocusCallback() {
         @Override
         public void onAutoFocus(boolean success, Camera camera) {
             log("Autofocus has been successful: " + success);
             if (success) {
-                mediaActionSound.play(MediaActionSound.FOCUS_COMPLETE);
+                focusAreaDrawable.set(focusAreaDrawableBounds, 0xAA00FF00);
+                focusAreaDrawable.invalidate();
             } else {
-                mediaActionSound.play(MediaActionSound.STOP_VIDEO_RECORDING);
+                focusAreaDrawable.set(focusAreaDrawableBounds, 0xAAFF0000);
+                focusAreaDrawable.invalidate();
             }
+            handler.postDelayed(removeFocusRect, 500);
         }
+
     };
 
 
@@ -252,7 +265,7 @@ public class CameraActivity extends AppCompatActivity {
         //  8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8
 
 
-        // this inflates the overlay_button_take_picture_button_take_picture.xml file to the View viewControl
+        // inflate the controls_camera.xml layout as View viewControl
         controlInflater = LayoutInflater.from(getBaseContext());
 
         View viewControl = controlInflater.inflate(R.layout.controls_camera, null);
@@ -262,6 +275,10 @@ public class CameraActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams.FILL_PARENT);
 
         this.addContentView(viewControl, layoutParamsControl);
+
+        // add focusAreaDrawable to layout
+        focusAreaDrawable = new FocusAreaDrawable(this);
+        this.addContentView(focusAreaDrawable, layoutParamsControl);
 
     }
 
@@ -459,11 +476,13 @@ public class CameraActivity extends AppCompatActivity {
         startCamera();
     }
 
-    /*
-    Update menu with values returned by CameraParameters.get(keyAvailableValues)
-    If menu is already up, whoIsCalling tells whether to toggle off or update
-     */
+
     private void updateValuesMenu(final int i, final TextView whoIsCalling){
+
+        /*
+        Update menu with values returned by CameraParameters.get(keyAvailableValues)
+        If menu is already up, whoIsCalling tells whether to toggle off or update
+        */
 
         final String keyAvailableValues = cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.AVAILABLE_VALUES).toString();
         final String keyCurrentValue = cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.VALUE).toString();
@@ -692,7 +711,7 @@ public class CameraActivity extends AppCompatActivity {
 
 
 
-        // butttonZoomPlus
+        // buttonZoomPlus
         Button buttonZoomPlus = (Button) findViewById(R.id.button_zoom_plus);
         buttonZoomPlus.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -845,23 +864,28 @@ public class CameraActivity extends AppCompatActivity {
 
     }
 
+
     private void initializeCameraPreviewAutofocus() {
+
         // focus touching the preview
         FrameLayout cameraPreview = (FrameLayout) findViewById(R.id.camera_preview);
         cameraPreview.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
 
+                handler.removeCallbacks(removeFocusRect);
+
                 log("cameraPreview.OnTouch");
 
-                // only available in
-                /*The Rect field in a Camera.Area object describes a
+                /*
+                The Rect field in a Camera.Area object describes a
                 rectangular shape mapped on a 2000 x 2000 unit grid.
                 The coordinates -1000, -1000 represent the top, left corner of the camera image,
                 and coordinates 1000, 1000 represent the bottom,
                 right corner of the camera image, as shown in the illustration below.
                 https://developer.android.com/guide/topics/media/images/camera-area-coordinates.png
                 */
+
                 int xRect = (int) ((event.getX() / v.getWidth() * 2000)-1000);
                 int yRect = (int) ((event.getY() / v.getHeight() * 2000)-1000);
 
@@ -874,28 +898,67 @@ public class CameraActivity extends AppCompatActivity {
                 if (yRect < (-1000 + (focusAreaSize / 2 ))) yRect = (-1000 + (focusAreaSize / 2));
                 if (yRect > (1000 - (focusAreaSize / 2 ))) yRect = (1000 - (focusAreaSize / 2 ));
 
-                Rect focusAreaRect = new Rect(xRect - focusAreaSize / 2, yRect - focusAreaSize / 2,
+
+                Rect cameraFocusRect = new Rect(xRect - focusAreaSize / 2, yRect - focusAreaSize / 2,
                         xRect + focusAreaSize / 2, yRect + focusAreaSize / 2);
                 List<Camera.Area> focusAreasList = new ArrayList<>();
-                focusAreasList.add(new Camera.Area(focusAreaRect, 1000));
+                focusAreasList.add(new Camera.Area(cameraFocusRect, 1000));
                 mCameraParameters.setFocusAreas(focusAreasList);
                 mCamera.setParameters(mCameraParameters);
 
-                log("Camera.Parameters.FOCUS_MODE_AUTO: " + Camera.Parameters.FOCUS_MODE_AUTO);
-                log("Camera.Parameters.FOCUS_MODE_MACRO: " + Camera.Parameters.FOCUS_MODE_MACRO);
-                log("mCameraParameters.getFocusMode(): " + mCameraParameters.getFocusMode());
-                log("mCameraParameters.get(\"focus-mode\") " + mCameraParameters.get("focus-mode"));
-                log("-----------------------------------");
 
                 if (mCameraParameters.get("focus-mode").equals(Camera.Parameters.FOCUS_MODE_AUTO) ||
                         mCameraParameters.get("focus-mode").equals(Camera.Parameters.FOCUS_MODE_MACRO)){
                     log("autofocus");
+
+                    // draw the autofocus
+                    focusAreaDrawableBounds = getDrawableRectBounds(cameraFocusRect);
+                    focusAreaDrawable.set(focusAreaDrawableBounds, 0xAAFFFFFF);
+                    focusAreaDrawable.invalidate();
+
+                    // call the autofocus
                     mCamera.autoFocus(autoFocusCallback);
                 }
 
                 return false;
             }
         });
+
+
+    }
+
+
+
+    private Rect getDrawableRectBounds(Rect cameraFocusRect) {
+
+
+        FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
+        RelativeLayout fullscreen = (RelativeLayout) findViewById(R.id.fullscreen_content);
+
+        // Rect(int left, int top, int right, int bottom)
+
+        log(" \ncameraFocusRect.left: " + cameraFocusRect.left);
+        log("cameraFocusRect.top: " + cameraFocusRect.top);
+        log("cameraFocusRect.right: " + cameraFocusRect.right);
+        log("cameraFocusRect.bottom: " + cameraFocusRect.bottom);
+
+        log(" \npreview top: " + preview.getTop());
+        log("preview left: " + preview.getLeft());
+
+        int left = (int) (((cameraFocusRect.left + 1000d) / 2000d * preview.getWidth()) + preview.getLeft());
+        int top = (int) (((cameraFocusRect.top + 1000d) / 2000d * preview.getHeight()) + preview.getTop());
+        int right = (int) (((cameraFocusRect.right+ 1000d) / 2000d * preview.getWidth()) + preview.getLeft());
+        int bottom = (int) (((cameraFocusRect.bottom + 1000d) / 2000d * preview.getHeight()) + preview.getTop());
+
+
+        log(" \nleft: " + left);
+        log("top: " + top);
+        log("right: " + right);
+        log("bottom: " + bottom);
+
+
+        return new Rect(left, top, right, bottom);
+
     }
 
     private void takePicture() {
