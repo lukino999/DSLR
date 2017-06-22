@@ -115,11 +115,11 @@ public class CameraActivity extends AppCompatActivity {
 
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
-            onPictureTakenCode(data);
+            pictureTaken(data);
         }
     };
     private Camera.Parameters mCameraParameters;
-    private View whoIsUsingTheMenuView;
+    private View whoIsUsingTheValueMenu;
 
     /** A safe way to get an instance of the Camera object. */
     public static Camera getCameraInstance(){
@@ -192,7 +192,7 @@ public class CameraActivity extends AppCompatActivity {
         System.out.println("SetFullscreen");
     }
 
-    private void onPictureTakenCode(byte[] data) {
+    private void pictureTaken(byte[] data) {
         // shutter animation
         FrameLayout frameShutter = (FrameLayout) findViewById(R.id.camera_preview);
         animator.shutterAnimation(frameShutter);
@@ -506,97 +506,86 @@ public class CameraActivity extends AppCompatActivity {
 
     private void initializeMainMenu() {
 
+
         final ListView mainMenu = (ListView) findViewById(R.id.list_view_main_menu);
         ArrayList<String> functionsArrayList = new ArrayList<>();
 
-        // populate the functionsArrayList with the values in CameraFunctionList
+        /*
+        Populate the functionsArrayList with LABEL: currentValue
+         */
         for (Map m : cameraFunctionsList.availableFuntions){
             log(m.toString());
-            functionsArrayList.add(m.get(cameraFunctionsList.LABEL).toString());
+
+            functionsArrayList.add(m.get(cameraFunctionsList.LABEL).toString() + ": " +
+            mCameraParameters.get(m.get(cameraFunctionsList.VALUE).toString()));
         }
 
         // populate the mainMenu ListView
         ArrayAdapter<String> arrayAdapter =
-                new ArrayAdapter<String>(getApplicationContext(),
+                new ArrayAdapter<>(getApplicationContext(),
                         android.R.layout.simple_list_item_1,
                         functionsArrayList);
-
         mainMenu.setAdapter(arrayAdapter);
 
 
-        // once mainMenu is drawn, initialize each item
-        final ViewTreeObserver vto = mainMenu.getViewTreeObserver();
-        vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+        mainMenu.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onGlobalLayout() {
-                vto.removeOnGlobalLayoutListener(this);
-
-                TextView mainMenuItem;
-
-                for (int i = 0; i < mainMenu.getChildCount(); i++){
-                    mainMenuItem = (TextView) mainMenu.getChildAt(i);
-                    initializeButton(mainMenuItem, i);
-                }
-
-                mainMenu.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        log("mainMenu.setOnItemClickListener");
-                        updateValuesMenu(position, (TextView) view);
-                    }
-                });
-
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                log("mainMenu.setOnItemClickListener");
+                updateValuesMenu(position, (TextView) view);
             }
         });
-
-        mainMenu.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-
-
-
-
 
     }
 
+
+    private String[] availableValues = new String[0];
     private void updateValuesMenu(final int i, final TextView whoIsCalling){
 
         /*
         Update menu with values returned by CameraParameters.get(keyAvailableValues)
         If menu is already up, whoIsCalling tells whether to toggle off or update
+
+        flagAvailableValues -> "-values": gets available values from cameraParameters
+        flagAvailableValues -> "-supported": available values are "true" or "false"
         */
 
-        final String keyAvailableValues = cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.AVAILABLE_VALUES).toString();
+        final String flagAvailableValues = cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.AVAILABLE_VALUES).toString();
         final String keyCurrentValue = cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.VALUE).toString();
         final String label = cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.LABEL).toString();
         final ListView listView = (ListView) findViewById(R.id.list_view_values_menu);
+        final String keyAvailableValues = keyCurrentValue + flagAvailableValues;
+        final String[] boolValues = {"true", "false"};
 
 
-
-        if (mCameraParameters.get(keyAvailableValues) != null) {
+        if (mCameraParameters.get(keyAvailableValues) != null ||
+                mCameraParameters.get(keyAvailableValues) == "true" ||
+                flagAvailableValues == "max-") {
             // ---------------------------------------------------------------------
-            if (menuViewVisible && (whoIsUsingTheMenuView == whoIsCalling)) {
+            if (menuViewVisible && (whoIsUsingTheValueMenu == whoIsCalling)) {
                 // toggle OFF
                 log("Update menu:: toggle OFF");
                 animator.fadeOut(listView);
                 menuViewVisible = false;
-                whoIsUsingTheMenuView = null;
+                whoIsUsingTheValueMenu = null;
                 setFullscreen();
             } else {
                 // toggle ON
                 log("Update menu:: toggle ON");
-                whoIsUsingTheMenuView = whoIsCalling;
+                whoIsUsingTheValueMenu = whoIsCalling;
                 menuViewVisible = true;
+
+
                 // get the availableValues as string[]
-                final String[] availableValues = mCameraParameters.get(keyAvailableValues).split(",");
+                if (flagAvailableValues == "-values") {
+                    // -values
+                    availableValues = mCameraParameters.get(keyAvailableValues).split(",");
+                } else if (flagAvailableValues == "-supported") {
+                    // -supported
+                    availableValues = boolValues;
+                } else if (flagAvailableValues == "max-") {
+                    availableValues = getPossibleValues(keyCurrentValue);
+                }
 
 
                 //convert it to ArrayList
@@ -611,7 +600,7 @@ public class CameraActivity extends AppCompatActivity {
                 log("currentValueString " + currentValueString + "   -   currentValueInt: " + currentValueIndex);
 
 
-
+                // wait for the listView to be ready before fadingIn and setting the listener
                 ViewTreeObserver vto = listView.getViewTreeObserver();
                 vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                     @Override
@@ -645,6 +634,60 @@ public class CameraActivity extends AppCompatActivity {
             Toast.makeText(this, "Not availabe", Toast.LENGTH_SHORT).show();
         }
 
+
+    }
+
+    private String[] getPossibleValues(String keyCurrentValue) {
+        float max;
+        String maxString = mCamera.getParameters().get("max-" + keyCurrentValue);
+        float min;
+        String minString = mCamera.getParameters().get("min-" + keyCurrentValue);
+        float step;
+        String stepString = mCamera.getParameters().get(keyCurrentValue + "-step");
+
+
+        if (maxString != null) {
+            max = Float.valueOf(maxString);
+        } else {
+            max = 0f;
+        }
+
+
+        if (minString != null) {
+            min = Float.valueOf(minString);
+        } else {
+            min = 0f;
+        }
+
+
+        if (stepString != null) {
+            step = Float.valueOf(stepString);
+        } else {
+            step = 1f;
+        }
+
+
+        log("min: " + min + "   max: " + max + "   step: " + step);
+
+
+        int arraySize = (int) (Math.abs((max - min)/step) + 1);
+        String[] possibleValues = new String[arraySize];
+
+
+        float actualValue = min;
+        possibleValues[0] = format(actualValue);
+        for (int i = 1; i < arraySize; i++) {
+            actualValue = actualValue + step;
+            possibleValues[i] = format(actualValue);
+
+        }
+
+        return possibleValues;
+    }
+
+    public static String format(float d) {
+        String s = String.valueOf(d);
+        return s.indexOf(".") < 0 ? s : s.replaceAll("0*$", "").replaceAll("\\.$", "");
     }
 
     private void checkForFurtherAction(String keyCurrentValue) {
@@ -748,10 +791,16 @@ public class CameraActivity extends AppCompatActivity {
             int steps = zoomRatiosList.size();
             System.out.println("Zoom steps: " + steps);
             System.out.println("getMaxZoom: " + mCameraParameters.getMaxZoom());
+
             // set max
             seekBarZoom.setMax(steps - 1);
+
             // set step
             seekBarZoom.incrementProgressBy(1);
+
+            // set bar to zero
+            seekBarZoom.setProgress(0);
+
             // setListener
             seekBarZoom.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
@@ -800,26 +849,6 @@ public class CameraActivity extends AppCompatActivity {
                 seekBarZoom.setProgress((seekBarZoom.getProgress() - 1));
             }
         });
-    }
-
-    // initialize button
-    private void initializeButton(TextView view, final int i ){
-
-        final String keyAvailableValues = cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.AVAILABLE_VALUES).toString();
-        final String keyCurrentValue = cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.VALUE).toString();
-
-        setMenuItemLabel(view, i);
-
-        /*
-        view.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                log("onClick:: " + keyCurrentValue);
-                updateValuesMenu(i, (TextView) v);
-            }
-        });
-        */
-
     }
 
     private void setMenuItemLabel(TextView view, final int i) {
@@ -875,6 +904,8 @@ public class CameraActivity extends AppCompatActivity {
 
 
     private void initializeCameraPreviewAutofocus() {
+
+        whoIsUsingTheValueMenu = null;
 
         // focus touching the preview
         FrameLayout cameraPreview = (FrameLayout) findViewById(R.id.camera_preview);
@@ -935,8 +966,6 @@ public class CameraActivity extends AppCompatActivity {
 
 
     }
-
-
 
     private Rect getDrawableRectBounds(Rect cameraFocusRect) {
 
@@ -1019,6 +1048,5 @@ public class CameraActivity extends AppCompatActivity {
         h.post(r);
 
     }
-
 
 }
