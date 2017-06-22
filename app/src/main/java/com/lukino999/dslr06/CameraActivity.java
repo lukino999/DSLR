@@ -59,12 +59,10 @@ public class CameraActivity extends AppCompatActivity {
     // this will be used to inflate an xml to its own View obj
     LayoutInflater controlInflater = null;
     boolean menuViewVisible = false;
-    int focusAreaSize = 200;
+    int focusAreaSize = 300;
     FocusAreaDrawable focusAreaDrawable;
-    private Rect focusAreaDrawableBounds;
-
     MyAnimator animator = new MyAnimator();
-
+    private Rect focusAreaDrawableBounds;
     private Handler handler = new Handler();
     private Runnable removeFocusRect = new Runnable() {
         @Override
@@ -121,7 +119,6 @@ public class CameraActivity extends AppCompatActivity {
         }
     };
     private Camera.Parameters mCameraParameters;
-    private ListView menuView;
     private View whoIsUsingTheMenuView;
 
     /** A safe way to get an instance of the Camera object. */
@@ -133,7 +130,7 @@ public class CameraActivity extends AppCompatActivity {
         catch (Exception e){
 
             // Camera is not available (in use or does not exist)
-            Log.i(" - - - - - - - - - - - ", "something wrong opening the camera");
+            log(" - - - - - - - - - - - something wrong opening the camera");
 
         }
         log("------Camera parameters------------------------------------------------------");
@@ -328,37 +325,45 @@ public class CameraActivity extends AppCompatActivity {
 
     private void setPreviewAspectRatio() {
 
-        /* in order to set preview aspect ratio to be the
-         same as camera output format proportions
-        get the format proportions from camera params*/
+        /*
+        in order to set preview aspect ratio to be the
+        same as camera output format proportions
+        get the format proportions from camera params
+        */
+
+        mCameraParameters = mCamera.getParameters();
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         int height = displayMetrics.heightPixels;
 
-        float aspectRatio;
+        float pictureAspectRatio;
 
-        Camera.Size pictureSize = mCamera.getParameters().getPictureSize();
-        System.out.println(pictureSize.width + " X " + pictureSize.height);
+        Camera.Size pictureSize = mCameraParameters.getPictureSize();
+        log(pictureSize.width + " X " + pictureSize.height);
 
-        aspectRatio = (float) pictureSize.width / (float) pictureSize.height;
+        Camera.Size previewSize = mCameraParameters.getPreviewSize();
 
-        System.out.println("Aspect Ratio: " + aspectRatio);
+        pictureAspectRatio = (float) pictureSize.width / (float) pictureSize.height;
+        log("pictureAspectRatio: " + pictureAspectRatio);
+
+        float previewAspectRatio = (float) previewSize.width / (float) previewSize.height;
+        log("previewAspectRatio: " + previewAspectRatio);
 
         // now set the preview width
-
         FrameLayout cameraPreviewLayout = (FrameLayout) findViewById(R.id.camera_preview);
         int cameraPreviewHeight = height;
-        int cameraPreviewWidth = (int) (height * aspectRatio);
+        int cameraPreviewWidth = (int) (height * pictureAspectRatio);
 
-        System.out.println("camera_preview size: " + cameraPreviewWidth + " X " + cameraPreviewHeight);
+        log("camera_preview size: " + cameraPreviewWidth + " X " + cameraPreviewHeight);
 
         ViewGroup.LayoutParams params = cameraPreviewLayout.getLayoutParams();
         params.width = cameraPreviewWidth;
         params.height = cameraPreviewHeight;
         cameraPreviewLayout.setLayoutParams(params);
 
-
+        mCameraParameters.setPreviewSize(cameraPreviewWidth, cameraPreviewHeight);
+        mCamera.setParameters(mCameraParameters);
 
     }
 
@@ -477,6 +482,91 @@ public class CameraActivity extends AppCompatActivity {
     }
 
 
+
+    // set the UI ----------------------------------------------------------------------------------
+    private void setControls() {
+
+        mCameraParameters = mCamera.getParameters();
+
+
+
+        initializeButtonCapture();
+
+        initializeCameraPreviewAutofocus();
+
+        initializeMainMenu();
+
+        initializeZoom();
+
+        initializeButtonShowMenu();
+
+        initializePicturesLeftMenu();
+
+    }
+
+    private void initializeMainMenu() {
+
+        final ListView mainMenu = (ListView) findViewById(R.id.list_view_main_menu);
+        ArrayList<String> functionsArrayList = new ArrayList<>();
+
+        // populate the functionsArrayList with the values in CameraFunctionList
+        for (Map m : cameraFunctionsList.availableFuntions){
+            log(m.toString());
+            functionsArrayList.add(m.get(cameraFunctionsList.LABEL).toString());
+        }
+
+        // populate the mainMenu ListView
+        ArrayAdapter<String> arrayAdapter =
+                new ArrayAdapter<String>(getApplicationContext(),
+                        android.R.layout.simple_list_item_1,
+                        functionsArrayList);
+
+        mainMenu.setAdapter(arrayAdapter);
+
+
+        // once mainMenu is drawn, initialize each item
+        final ViewTreeObserver vto = mainMenu.getViewTreeObserver();
+        vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                vto.removeOnGlobalLayoutListener(this);
+
+                TextView mainMenuItem;
+
+                for (int i = 0; i < mainMenu.getChildCount(); i++){
+                    mainMenuItem = (TextView) mainMenu.getChildAt(i);
+                    initializeButton(mainMenuItem, i);
+                }
+
+                mainMenu.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        log("mainMenu.setOnItemClickListener");
+                        updateValuesMenu(position, (TextView) view);
+                    }
+                });
+
+            }
+        });
+
+        mainMenu.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+
+
+
+
+    }
+
     private void updateValuesMenu(final int i, final TextView whoIsCalling){
 
         /*
@@ -526,11 +616,8 @@ public class CameraActivity extends AppCompatActivity {
                 vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                     @Override
                     public void onGlobalLayout() {
-                        log("vto.onGlobalLayout");
-
                         // remove this listener
                         listView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-
 
                         // show the menuView
                         animator.fadeIn(listView);
@@ -538,12 +625,13 @@ public class CameraActivity extends AppCompatActivity {
                         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                             @Override
                             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                                log(" mainMenu.setOnItemSelectedListener");
+                                log(" \nvaluesMenu.OnItemClick");
                                 view.getFocusables(position);
                                 view.setSelected(true);
                                 mCameraParameters.set(keyCurrentValue, availableValues[position]);
                                 mCamera.setParameters(mCameraParameters);
                                 setMenuItemLabel(whoIsCalling, i);
+                                checkForFurtherAction(keyCurrentValue);
                             }
                         });
 
@@ -559,29 +647,13 @@ public class CameraActivity extends AppCompatActivity {
 
     }
 
-    private void setControls() {
-
-        mCameraParameters = mCamera.getParameters();
-
-
-
-        initializeButtonCapture();
-
-        initializeCameraPreviewAutofocus();
-
-        //initializeButtonHowManyPictures();
-
-        initializeMainMenu();
-
-        initializeZoom();
-
-        initializeButtonShowMenu();
-
-        initializePictureLeftMenu();
-
+    private void checkForFurtherAction(String keyCurrentValue) {
+        switch (keyCurrentValue){
+            case "picture-size":    setPreviewAspectRatio();
+        }
     }
 
-    private void initializePictureLeftMenu() {
+    private void initializePicturesLeftMenu() {
         final ListView howManyPicturesMenu = (ListView) findViewById(R.id.list_view_how_many_pictures);
         final TextView textViewHowMany = (TextView) findViewById(R.id.text_view_how_many_pictures);
         String[] howManyPicsMenuItems = {"+10", "+1", "RESET", "-1", "-10", "START"};
@@ -728,69 +800,6 @@ public class CameraActivity extends AppCompatActivity {
                 seekBarZoom.setProgress((seekBarZoom.getProgress() - 1));
             }
         });
-    }
-
-    private void initializeMainMenu() {
-
-        final ListView mainMenu = (ListView) findViewById(R.id.list_view_main_menu);
-        ArrayList<String> functionsArrayList = new ArrayList<>();
-
-        // populate the functionsArrayList with the values in CameraFunctionList
-        for (Map m : cameraFunctionsList.availableFuntions){
-            log(m.toString());
-            functionsArrayList.add(m.get(cameraFunctionsList.LABEL).toString());
-        }
-
-        // populate the mainMenu ListView
-        ArrayAdapter<String> arrayAdapter =
-                new ArrayAdapter<String>(getApplicationContext(),
-                        android.R.layout.simple_list_item_1,
-                        functionsArrayList);
-
-        mainMenu.setAdapter(arrayAdapter);
-
-
-        // once mainMenu is drawn, initialize each item
-        final ViewTreeObserver vto = mainMenu.getViewTreeObserver();
-        vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                vto.removeOnGlobalLayoutListener(this);
-
-                TextView mainMenuItem;
-
-                for (int i = 0; i < mainMenu.getChildCount(); i++){
-                    mainMenuItem = (TextView) mainMenu.getChildAt(i);
-                    initializeButton(mainMenuItem, i);
-                }
-
-                mainMenu.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        log("mainMenu.setOnItemClickListener");
-                        updateValuesMenu(position, (TextView) view);
-                    }
-                });
-
-            }
-        });
-
-        mainMenu.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-
-
-
-
-
     }
 
     // initialize button

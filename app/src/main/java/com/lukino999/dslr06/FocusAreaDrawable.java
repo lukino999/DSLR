@@ -5,7 +5,6 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.OvalShape;
 import android.graphics.drawable.shapes.RectShape;
 import android.view.View;
 
@@ -14,8 +13,8 @@ import android.view.View;
  */
 
 public class FocusAreaDrawable extends View {
-    private ShapeDrawable mDrawable;
     Canvas canvas;
+    private ShapeDrawable mDrawable;
 
     public FocusAreaDrawable(Context context) {
         super(context);
@@ -37,9 +36,8 @@ public class FocusAreaDrawable extends View {
         this.canvas = canvas;
     }
 
-    public void set(Rect bounds, int color){
+    public void set(Rect bounds, int color) {
         mDrawable.getPaint().setColor(color);
         mDrawable.setBounds(bounds);
-
     }
 }

@@ -20,8 +20,10 @@ public class CameraFunctionsList {
     HashMap<String, String> iso = new HashMap<>();
     HashMap<String, String> sceneMode = new HashMap<>();
     HashMap<String, String> pictureSize= new HashMap<>();
-    HashMap<String, String> effectValues= new HashMap<>();
-    HashMap<String, String> selectableZoneAfValues= new HashMap<>();
+    HashMap<String, String> effect = new HashMap<>();
+    HashMap<String, String> selectableZoneAf = new HashMap<>();
+    HashMap<String, String> histogram = new HashMap<>();
+
 
 
     public CameraFunctionsList() {
@@ -56,16 +58,17 @@ public class CameraFunctionsList {
         pictureSize.put(AVAILABLE_VALUES, "picture-size-values");
         availableFuntions.add(pictureSize);
 
-        effectValues.put(LABEL, "Effects");
-        effectValues.put(VALUE, "effect");
-        effectValues.put(AVAILABLE_VALUES, "effect-values");
-        availableFuntions.add(effectValues);
+        // effect
+        effect.put(LABEL, "Effects");
+        effect.put(VALUE, "effect");
+        effect.put(AVAILABLE_VALUES, "effect-values");
+        availableFuntions.add(effect);
 
-        selectableZoneAfValues.put(LABEL, "AutoFocus mode");
-        selectableZoneAfValues.put(VALUE, "selectable-zone-af");
-        selectableZoneAfValues.put(AVAILABLE_VALUES, "selectable-zone-af-values");
-        availableFuntions.add(selectableZoneAfValues);
-
+        // selectable-zone-af
+        selectableZoneAf.put(LABEL, "AutoFocus mode");
+        selectableZoneAf.put(VALUE, "selectable-zone-af");
+        selectableZoneAf.put(AVAILABLE_VALUES, "selectable-zone-af-values");
+        availableFuntions.add(selectableZoneAf);
 
 
 
