@@ -25,6 +25,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
@@ -800,12 +801,20 @@ public class CameraActivity extends AppCompatActivity {
     }
 
     private void initializeZoom() {
+
+        final RelativeLayout menuZoom = (RelativeLayout) findViewById(R.id.menu_zoom);
+
         final SeekBar seekBarZoom = (SeekBar) findViewById(R.id.seekbar_zoom);
         final TextView textViewZoom = (TextView) findViewById(R.id.text_view_zoom);
         // get how many steps
         final List zoomRatiosList = mCameraParameters.getZoomRatios();
 
         if (zoomRatiosList != null) {
+
+            RelativeLayout.LayoutParams menuZoomParams = (RelativeLayout.LayoutParams) menuZoom.getLayoutParams();
+            menuZoomParams.setMargins(0,1000 - (menuZoomParams.height/2),0,0);
+            menuZoom.requestLayout();
+
             int steps = zoomRatiosList.size();
             System.out.println("Zoom steps: " + steps);
             System.out.println("getMaxZoom: " + mCameraParameters.getMaxZoom());
@@ -818,6 +827,7 @@ public class CameraActivity extends AppCompatActivity {
 
             // set bar to zero
             seekBarZoom.setProgress(0);
+
 
             // setListener
             seekBarZoom.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -850,8 +860,9 @@ public class CameraActivity extends AppCompatActivity {
 
 
 
+/*
         // buttonZoomPlus
-        Button buttonZoomPlus = (Button) findViewById(R.id.button_zoom_plus);
+        ImageButton buttonZoomPlus = (ImageButton) findViewById(R.id.button_zoom_plus);
         buttonZoomPlus.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -860,13 +871,15 @@ public class CameraActivity extends AppCompatActivity {
         });
 
         // buttonZoomMinus
-        Button buttonZoomMinus = (Button) findViewById(R.id.button_zoom_minus);
+        ImageButton buttonZoomMinus = (ImageButton) findViewById(R.id.button_zoom_minus);
         buttonZoomMinus.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 seekBarZoom.setProgress((seekBarZoom.getProgress() - 1));
             }
         });
+        */
+
     }
 
     private void setMenuItemLabel(TextView view, final int i) {

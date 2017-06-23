@@ -23,7 +23,8 @@
         android:choiceMode="singleChoice"
         android:listSelector="@android:color/background_dark"
         android:layout_marginLeft="5dp"
-        android:visibility="invisible">
+        android:visibility="invisible"
+        tools:ignore="RtlHardcoded">
     </ListView>
 
 
@@ -33,45 +34,57 @@
     <RelativeLayout
         android:id="@+id/menu_zoom"
         android:layout_width="400dp"
-        android:layout_height="100dp"
+        android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="5dp"
+        android:layout_alignParentTop="true"
         android:visibility="visible">
 
 
-        <Button
+        <ImageButton
             android:id="@+id/button_zoom_plus"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="#afff"
-            android:text="+"
-            android:textColor="@color/colorPrimary"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentRight="true"/>
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
 
-        <Button
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/plus_button"
+            android:background="#0000"
+            android:alpha=".75"
+            tools:ignore="RtlHardcoded"
+            android:scaleType="center"
+            android:scaleX=".5"
+            android:scaleY=".5" />
+
+        <ImageButton
             android:id="@+id/button_zoom_minus"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="#afff"
-            android:text="-"
-            android:textColor="@color/colorPrimary"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentLeft="true"/>
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/minus_button"
+            android:background="#0000"
+            android:alpha="0.75"
+            tools:ignore="RtlHardcoded"
+            android:scaleType="center"
+            android:scaleX=".5"
+            android:scaleY=".5"
+            />
+
 
         <SeekBar
             android:id="@+id/seekbar_zoom"
             android:layout_width="300dp"
             android:layout_height="50dp"
-            android:layout_toEndOf="@id/button_zoom_minus"
-            android:layout_toRightOf="@id/button_zoom_minus"
-            />
+            android:alpha="0.75"
+            android:maxHeight="1000dp"
+            android:layout_centerInParent="true"
+            android:scaleY="4"
+             />
 
         <TextView
             android:id="@+id/text_view_zoom"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="TempTextView"
             android:layout_below="@+id/seekbar_zoom"
             android:layout_centerHorizontal="true"
             android:visibility="invisible"/>
@@ -89,7 +102,7 @@
         android:background="@color/menuBackgroud"
         android:layout_toLeftOf="@+id/layout_capture_button"
         android:visibility="invisible"
-        >
+        tools:ignore="RtlHardcoded">
 
     </ListView>
 
@@ -99,7 +112,8 @@
         android:layout_width="130dp"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
-        android:layout_alignParentRight="true">
+        android:layout_alignParentRight="true"
+        tools:ignore="RtlHardcoded">
 
         <ImageButton
             android:id="@+id/button_capture"
@@ -123,7 +137,7 @@
             android:layout_toLeftOf="@id/button_capture"
             android:layout_marginRight="5dp"
             android:visibility="invisible"
-            />
+            tools:ignore="HardcodedText" />
 
 
 
@@ -138,7 +152,8 @@
         android:src="@drawable/button_arrow_right"
         android:background="#0000"
         android:layout_marginLeft="-10dp"
-        android:alpha="0.75"/>
+        android:alpha="0.75"
+        tools:ignore="ContentDescription,RtlHardcoded" />
 
 
 
@@ -152,6 +167,7 @@
         android:textColor="@color/colorPrimary"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
-        android:visibility="invisible"/>
+        android:visibility="invisible"
+        tools:ignore="HardcodedText" />
 
 </RelativeLayout>
