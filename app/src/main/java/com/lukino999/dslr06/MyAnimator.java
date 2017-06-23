@@ -16,16 +16,22 @@ public class MyAnimator extends AppCompatActivity {
     // fadeIn and fadeOut duration
     long fadeDuration = 300;
 
+    long shutterDuration = 100;
+
+    private Handler shutterHandler = new Handler();
+
+    private View shutterView;
+
     private TextView tempTextView;
+
     private Handler tempTextViewHandler = new Handler();
+
     Runnable run = new Runnable() {
         @Override
         public void run() {
             tempTextView.setVisibility(View.INVISIBLE);
         }
     };
-
-
 
     MediaActionSound mediaActionSound = new MediaActionSound();
 
@@ -83,35 +89,28 @@ public class MyAnimator extends AppCompatActivity {
         });
     }
 
+
+
+
+
+
+    Runnable open = new Runnable() {
+        @Override
+        public void run() {
+            shutterView.animate().alpha(1f).setDuration(250);
+        }
+    };
+
     // blacks out the camera prewiew to simulate the shutter
-    public void shutterAnimation(final View v){
+    public void shutter(final View v){
 
-        v.setAlpha(0);
-//        v.setVisibility(View.VISIBLE);
-        v.animate().alpha(1f).setDuration(250).setListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-                mediaActionSound.play(MediaActionSound.SHUTTER_CLICK);
-            }
+        this.shutterView = v;
 
-            @Override
-            public void onAnimationEnd(Animator animation) {
-//                v.setVisibility(View.INVISIBLE);
-            }
+        v.animate().alpha(0f).setDuration(250);
 
-            @Override
-            public void onAnimationCancel(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-
-            }
-        });
+        shutterHandler.postDelayed(open, shutterDuration);
 
     }
-
 
 
     // temporaryTextView

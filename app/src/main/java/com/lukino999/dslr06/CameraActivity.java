@@ -55,7 +55,7 @@ public class CameraActivity extends AppCompatActivity {
     final CameraFunctionsList cameraFunctionsList = new CameraFunctionsList();
     // sets fullscreen declarations
     private final Handler mHideHandler = new Handler();
-    MediaActionSound mediaActionSound =  new MediaActionSound();
+    MediaActionSound shutterClick =  new MediaActionSound();
     // this will be used to inflate an xml to its own View obj
     LayoutInflater controlInflater = null;
     boolean menuViewVisible = false;
@@ -110,14 +110,30 @@ public class CameraActivity extends AppCompatActivity {
     };
     private Camera mCamera;
     private CameraPreview mPreview;
-    private boolean isPictureSequenceEnabled = false;
+    private boolean keepTakingPictures = false;
     private Camera.PictureCallback mPicture = new Camera.PictureCallback() {
 
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
-            pictureTaken(data);
+            mOnPictureTaken(data);
         }
     };
+
+    private Camera.ShutterCallback mShutterCallback = new Camera.ShutterCallback() {
+        @Override
+        public void onShutter() {
+
+            shutterClick.play(MediaActionSound.SHUTTER_CLICK);
+
+            FrameLayout frameShutter = (FrameLayout) findViewById(R.id.camera_preview);
+            animator.shutter(frameShutter);
+        }
+    };
+
+
+
+
+
     private Camera.Parameters mCameraParameters;
     private View whoIsUsingTheValueMenu;
 
@@ -192,10 +208,9 @@ public class CameraActivity extends AppCompatActivity {
         System.out.println("SetFullscreen");
     }
 
-    private void pictureTaken(byte[] data) {
-        // shutter animation
-        FrameLayout frameShutter = (FrameLayout) findViewById(R.id.camera_preview);
-        animator.shutterAnimation(frameShutter);
+
+
+    private void mOnPictureTaken(byte[] data) {
 
         File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
         if (pictureFile == null){
@@ -215,16 +230,19 @@ public class CameraActivity extends AppCompatActivity {
 
         Log.i(" - - - - - - - - - - - ", "Picture taken " + getOutputMediaFileUri(MEDIA_TYPE_IMAGE));
         Toast.makeText(CameraActivity.this, "Saved as: " + getOutputMediaFileUri(MEDIA_TYPE_IMAGE), Toast.LENGTH_SHORT).show();
+
+
         mCamera.startPreview();
 
-        //Button buttonHowManyPictures = (Button) findViewById(R.id.button_howManyPictures);
-        // check whether is picture sequence
-        if (isPictureSequenceEnabled) {
+        /*
+        keep taking pictures?
+         */
+        if (keepTakingPictures) {
 
             // get how many pictures left to take
             TextView howManyPicturesLeft = (TextView) findViewById(R.id.text_view_how_many_pictures);
             int picturesLeftToTake = Integer.parseInt(howManyPicturesLeft.getText().toString());
-            System.out.println("Pictures left: " + picturesLeftToTake);
+            log("Pictures left: " + picturesLeftToTake);
 
             if (picturesLeftToTake > 1){
                 //buttonCapture.performClick();
@@ -861,12 +879,14 @@ public class CameraActivity extends AppCompatActivity {
 
     private void initializeButtonCapture() {
 
+        shutterClick.load(MediaActionSound.SHUTTER_CLICK);
+
         final ImageButton buttonCapture = (ImageButton) findViewById(R.id.button_capture);
         buttonCapture.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        isPictureSequenceEnabled = false;
+                        keepTakingPictures = false;
                         takePicture();
                     }
                 }
@@ -1001,7 +1021,7 @@ public class CameraActivity extends AppCompatActivity {
 
     private void takePicture() {
         // get an image from the camera
-        mCamera.takePicture(null, null, mPicture);
+        mCamera.takePicture(mShutterCallback, null, mPicture);
     }
 
     private void fillValuesMenu(ArrayList<String> arrayList){
@@ -1035,7 +1055,7 @@ public class CameraActivity extends AppCompatActivity {
                      */
 
                     // get sequence of pictures
-                    isPictureSequenceEnabled = true;
+                    keepTakingPictures = true;
                     takePicture();
 
                 }
