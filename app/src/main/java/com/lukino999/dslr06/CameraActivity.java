@@ -6,7 +6,6 @@ import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.hardware.Camera;
 import android.media.MediaActionSound;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -14,7 +13,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -41,8 +39,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import static android.content.ContentValues.TAG;
-
 @SuppressWarnings("deprecation")
 public class CameraActivity extends AppCompatActivity {
 
@@ -51,7 +47,7 @@ public class CameraActivity extends AppCompatActivity {
     private static final int MY_PERMISSIONS_REQUEST_CAMERA = 1001;
     private static final int MY_PERMISSIONS_WRITE_EXTERNAL_STORAGE = 1002;
 
-    private static String appName = "DSLR";
+    private static String appName;
 
     final CameraFunctionsList cameraFunctionsList = new CameraFunctionsList();
 
@@ -165,31 +161,34 @@ public class CameraActivity extends AppCompatActivity {
         return c; // returns null if camera is unavailable
     }
 
-    /** Create a file Uri for saving an image or video */
-    private static Uri getOutputMediaFileUri(int type){  //why not used??
-        return Uri.fromFile(getOutputMediaFile(type));
-    }
 
     /** Create a File for saving an image or video */
     private static File getOutputMediaFile(int type){
+
+        boolean saveOnSD = true;
+
+        File mediaStorageDir;
+
         // To be safe, you should check that the SDCard is mounted
         // using Environment.getExternalStorageState() before doing this.
 
-        File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES), appName);
+
         // This location works best if you want the created images to be shared
         // between applications and persist after your app has been uninstalled.
+        mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), appName);
+
+        log(mediaStorageDir.toString());
 
         // Create the storage directory if it does not exist
         if (! mediaStorageDir.exists()){
             if (! mediaStorageDir.mkdirs()){
-                Log.d("MyCameraApp", "failed to create directory");
+                log("Failed to create directory" + mediaStorageDir.toString());
                 return null;
             }
         }
 
         // Create a media file name
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS").format(new Date());
         File mediaFile;
         if (type == MEDIA_TYPE_IMAGE){
             mediaFile = new File(mediaStorageDir.getPath() + File.separator +
@@ -222,7 +221,7 @@ public class CameraActivity extends AppCompatActivity {
 
         File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
         if (pictureFile == null){
-            Log.d(TAG, "Error creating media file, check storage permissions: ");  //e.getMessage();
+            log("Error creating media file, check storage permissions: ");  //e.getMessage();
             return;
         }
 
@@ -231,13 +230,13 @@ public class CameraActivity extends AppCompatActivity {
             fos.write(data);
             fos.close();
         } catch (FileNotFoundException e) {
-            Log.d(TAG, "File not found: " + e.getMessage());
+            log("File not found: " + e.getMessage());
         } catch (IOException e) {
-            Log.d(TAG, "Error accessing file: " + e.getMessage());
+            log("Error accessing file: " + e.getMessage());
         }
 
-        Log.i(" - - - - - - - - - - - ", "Picture taken " + getOutputMediaFileUri(MEDIA_TYPE_IMAGE));
-        Toast.makeText(CameraActivity.this, "Saved as: " + getOutputMediaFileUri(MEDIA_TYPE_IMAGE), Toast.LENGTH_SHORT).show();
+        log(" - - - - - - - - - - - Picture taken " + pictureFile.toString());
+        Toast.makeText(CameraActivity.this, "Saved as: " + pictureFile.toString(), Toast.LENGTH_SHORT).show();
 
 
         mCamera.startPreview();
@@ -480,7 +479,7 @@ public class CameraActivity extends AppCompatActivity {
 
 
 
-        Log.i(" - - - - - - - - - - - ", "end of onCreate");
+        log(" - - - - - - - - - - - end of onCreate");
     }
 
     // release the camera once done ----------------------------------------------------------------
@@ -495,7 +494,7 @@ public class CameraActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
 
-        Log.i(" - - - - - - - - - - - ", "onPause");
+        log(" - - - - - - - - - - - onPause");
         releaseCamera();              // release the camera immediately on pause event
     }
 
@@ -503,7 +502,7 @@ public class CameraActivity extends AppCompatActivity {
     protected void onRestart() {
         super.onRestart();
 
-        Log.i(" - - - - - - - - - - - ", "onRestart");
+        log(" - - - - - - - - - - - onRestart");
         startCamera();
     }
 
@@ -1037,7 +1036,7 @@ public class CameraActivity extends AppCompatActivity {
 
     private void countDown() {
 
-        final TextView textViewCentral = (TextView) findViewById(R.id.text_view_central);
+        final TextView textViewCentral = (TextView) findViewById(R.id.text_view_countdown);
 
         final Handler h = new Handler();
         final Runnable r = new Runnable() {
