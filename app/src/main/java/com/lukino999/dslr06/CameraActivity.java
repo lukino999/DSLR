@@ -22,10 +22,8 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
@@ -52,19 +50,28 @@ public class CameraActivity extends AppCompatActivity {
     public static final int MEDIA_TYPE_VIDEO = 2;
     private static final int MY_PERMISSIONS_REQUEST_CAMERA = 1001;
     private static final int MY_PERMISSIONS_WRITE_EXTERNAL_STORAGE = 1002;
+
     private static String appName = "DSLR";
+
     final CameraFunctionsList cameraFunctionsList = new CameraFunctionsList();
+
     // sets fullscreen declarations
     private final Handler mHideHandler = new Handler();
+
     MediaActionSound shutterClick =  new MediaActionSound();
+
     // this will be used to inflate an xml to its own View obj
     LayoutInflater controlInflater = null;
+
     boolean menuViewVisible = false;
-    int focusAreaSize = 300;
-    FocusAreaDrawable focusAreaDrawable;
+
     MyAnimator animator = new MyAnimator();
+
+    int focusAreaSize = 300;
+
+    FocusAreaDrawable focusAreaDrawable;
     private Rect focusAreaDrawableBounds;
-    private Handler handler = new Handler();
+    private Handler removeFocusHandler = new Handler();
     private Runnable removeFocusRect = new Runnable() {
         @Override
         public void run() {
@@ -84,13 +91,14 @@ public class CameraActivity extends AppCompatActivity {
                 focusAreaDrawable.set(focusAreaDrawableBounds, 0xAAFF0000);
                 focusAreaDrawable.invalidate();
             }
-            handler.postDelayed(removeFocusRect, 500);
+            removeFocusHandler.postDelayed(removeFocusRect, 500);
         }
 
     };
 
 
     private int countDown = 3;
+
     private View mContentView;
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
@@ -109,9 +117,11 @@ public class CameraActivity extends AppCompatActivity {
                     | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
         }
     };
+
     private Camera mCamera;
     private CameraPreview mPreview;
     private boolean keepTakingPictures = false;
+
     private Camera.PictureCallback mPicture = new Camera.PictureCallback() {
 
         @Override
@@ -130,9 +140,6 @@ public class CameraActivity extends AppCompatActivity {
             animator.shutter(frameShutter);
         }
     };
-
-
-
 
 
     private Camera.Parameters mCameraParameters;
@@ -206,7 +213,7 @@ public class CameraActivity extends AppCompatActivity {
         // makes fullscreen
         mContentView = findViewById(R.id.fullscreen_content);
         mHideHandler.post(mHidePart2Runnable);
-        System.out.println("SetFullscreen");
+        log("SetFullscreen");
     }
 
 
@@ -507,6 +514,9 @@ public class CameraActivity extends AppCompatActivity {
 
         mCameraParameters = mCamera.getParameters();
 
+        mCameraParameters.set(" jpeg-quality", "100");
+        mCamera.setParameters(mCameraParameters);
+        log(" jpeg-quality: " + mCameraParameters.get(" jpeg-quality"));
 
 
         initializeButtonCapture();
@@ -811,13 +821,16 @@ public class CameraActivity extends AppCompatActivity {
 
         if (zoomRatiosList != null) {
 
+            /*
             RelativeLayout.LayoutParams menuZoomParams = (RelativeLayout.LayoutParams) menuZoom.getLayoutParams();
-            menuZoomParams.setMargins(0,1000 - (menuZoomParams.height/2),0,0);
+            menuZoomParams.setMargins(0,0,0,0);
             menuZoom.requestLayout();
+            */
+
 
             int steps = zoomRatiosList.size();
-            System.out.println("Zoom steps: " + steps);
-            System.out.println("getMaxZoom: " + mCameraParameters.getMaxZoom());
+            log("Zoom steps: " + steps);
+            log("getMaxZoom: " + mCameraParameters.getMaxZoom());
 
             // set max
             seekBarZoom.setMax(steps - 1);
@@ -836,9 +849,9 @@ public class CameraActivity extends AppCompatActivity {
                     mCameraParameters.setZoom(progress);
                     mCamera.setParameters(mCameraParameters);
                     if (fromUser) {
-                        System.out.println("seekBar from user: " + progress);
+                        log("seekBar from user: " + progress);
                     } else {
-                        System.out.println("seekBar from code: " + progress);
+                        log("seekBar from code: " + progress);
                     }
                     float zoomRatio = Float.valueOf(zoomRatiosList.get(progress).toString()) / 100;
                     animator.tempTextView(textViewZoom, "x " + String.valueOf(zoomRatio));
@@ -856,29 +869,6 @@ public class CameraActivity extends AppCompatActivity {
                 }
             });
         }
-
-
-
-
-/*
-        // buttonZoomPlus
-        ImageButton buttonZoomPlus = (ImageButton) findViewById(R.id.button_zoom_plus);
-        buttonZoomPlus.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                seekBarZoom.setProgress((seekBarZoom.getProgress() + 1));
-            }
-        });
-
-        // buttonZoomMinus
-        ImageButton buttonZoomMinus = (ImageButton) findViewById(R.id.button_zoom_minus);
-        buttonZoomMinus.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                seekBarZoom.setProgress((seekBarZoom.getProgress() - 1));
-            }
-        });
-        */
 
     }
 
@@ -908,7 +898,7 @@ public class CameraActivity extends AppCompatActivity {
         buttonCapture.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                System.out.println("OnLongClick");
+                log("OnLongClick");
                 //countDown();
                 animator.fadeOut(findViewById(R.id.menu_zoom));
                 animator.fadeOut(findViewById(R.id.list_view_values_menu));
@@ -946,7 +936,7 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
 
-                handler.removeCallbacks(removeFocusRect);
+                removeFocusHandler.removeCallbacks(removeFocusRect);
 
                 log("cameraPreview.OnTouch");
 
@@ -1055,11 +1045,11 @@ public class CameraActivity extends AppCompatActivity {
             public void run() {
                 textViewCentral.setText(String.valueOf(countDown));
                 if (countDown > 1) {
-                    System.out.println("Countdown: " + countDown);
+                    log("Countdown: " + countDown);
                     countDown--;
                     h.postDelayed(this, 1000);
                 } else {
-                    System.out.println("TimeOver");
+                    log("TimeOver");
                     animator.fadeOut(textViewCentral);
                     countDown = 3;
                     /*

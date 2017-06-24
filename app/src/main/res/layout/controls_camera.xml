@@ -36,9 +36,10 @@
         android:layout_width="400dp"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_alignParentTop="true"
+        android:layout_alignParentBottom="true"
         android:visibility="visible">
 
+<!--
 
         <ImageButton
             android:id="@+id/button_zoom_plus"
@@ -70,6 +71,9 @@
             android:scaleY=".5"
             />
 
+-->
+
+
 
         <SeekBar
             android:id="@+id/seekbar_zoom"
@@ -77,15 +81,16 @@
             android:layout_height="50dp"
             android:alpha="0.75"
             android:maxHeight="1000dp"
-            android:layout_centerInParent="true"
-            android:scaleY="4"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:scaleY=".5"
              />
 
         <TextView
             android:id="@+id/text_view_zoom"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/seekbar_zoom"
+            android:layout_above="@+id/seekbar_zoom"
             android:layout_centerHorizontal="true"
             android:visibility="invisible"/>
 
