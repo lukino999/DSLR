@@ -2,7 +2,7 @@
 <hr/>
 <p>
 	<h2>Why?</h2>
-	<p>I like astrophotography and I came across this free software <a href="http://deepskystacker.free.fr">Deep Sky Stacker</a> which takes hundreds of pictures of the night sky and stacks them toghether in order to reduce noise and give a clearer picture (after some postprocessing).</p>
+	<p>I like astrophotography and I came across <a href="http://deepskystacker.free.fr">Deep Sky Stacker</a>, a free software which given multiple pictures of the night sky, stacks them toghether in order to reduce noise and give a clearer picture (after some postprocessing).</p>
 	<p>The basic idea is to strap your device on a stand, set some values and wait till it's done.</p>
 
 </p>
