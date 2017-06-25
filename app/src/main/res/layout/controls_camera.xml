@@ -12,7 +12,7 @@
         android:background="@color/menuBackgroud"
         android:choiceMode="singleChoice"
         android:listSelector="@android:color/background_dark"
-        android:visibility="invisible"></ListView>
+        android:visibility="invisible" />
     <ListView
         android:id="@+id/list_view_values_menu"
         android:layout_width="200dp"
@@ -34,44 +34,11 @@
     <RelativeLayout
         android:id="@+id/menu_zoom"
         android:layout_width="400dp"
-        android:layout_height="wrap_content"
+        android:layout_height="100dp"
         android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
         android:visibility="visible">
 
-<!--
-
-        <ImageButton
-            android:id="@+id/button_zoom_plus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:src="@drawable/plus_button"
-            android:background="#0000"
-            android:alpha=".75"
-            tools:ignore="RtlHardcoded"
-            android:scaleType="center"
-            android:scaleX=".5"
-            android:scaleY=".5" />
-
-        <ImageButton
-            android:id="@+id/button_zoom_minus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_centerVertical="true"
-            android:src="@drawable/minus_button"
-            android:background="#0000"
-            android:alpha="0.75"
-            tools:ignore="RtlHardcoded"
-            android:scaleType="center"
-            android:scaleX=".5"
-            android:scaleY=".5"
-            />
-
--->
 
 
 
@@ -83,7 +50,8 @@
             android:maxHeight="1000dp"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
-            android:scaleY=".5"
+            android:scaleY=".7"
+            android:thumbTint="@color/colorThumb"
              />
 
         <TextView
@@ -163,13 +131,13 @@
 
 
     <TextView
-        android:id="@+id/text_view_central"
+        android:id="@+id/text_view_countdown"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="3"
         android:background="#0000"
         android:textSize="320sp"
-        android:textColor="@color/colorPrimary"
+        android:textColor="@color/colorCountdown"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
         android:visibility="invisible"

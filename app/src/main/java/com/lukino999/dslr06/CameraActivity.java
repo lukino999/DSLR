@@ -727,7 +727,7 @@ public class CameraActivity extends AppCompatActivity {
     private void initializePicturesLeftMenu() {
         final ListView howManyPicturesMenu = (ListView) findViewById(R.id.list_view_how_many_pictures);
         final TextView textViewHowMany = (TextView) findViewById(R.id.text_view_how_many_pictures);
-        String[] howManyPicsMenuItems = {"+10", "+1", "RESET", "-1", "-10", "START"};
+        String[] howManyPicsMenuItems = {"RESET", "+100", "+10", "+1", "START"};
         ArrayList<String> howManyPicsItemsArrayList = new ArrayList<>(Arrays.asList(howManyPicsMenuItems));
         ArrayAdapter arrayAdapter = new ArrayAdapter(getApplicationContext(), android.R.layout.simple_list_item_1, howManyPicsItemsArrayList);
         howManyPicturesMenu.setAdapter(arrayAdapter);
