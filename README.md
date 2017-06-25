@@ -9,7 +9,7 @@
 <p>
 	<h2>How?</h2>
 	<p>The interface is minimal, with a menu on the left, zoom bar in the bottom and capture button.</p>
-	<p>From the menu, set ISO speed, lock focus, auto exposure, white balance, exposure... Long press the capture button to enter how many pictures to take and press start. Right after, cover the camera and, keeping the same settings, take some 10/20 dark frames. Export all the frames on Deep Sky Staker and let it do the magic.</p>
+	<p>From the menu, set ISO speed, lock focus, auto exposure, white balance, exposure... Long press the capture button to enter how many pictures to take and press start. Once done and <b>right after</b>, cover the camera and, keeping the same settings, take some 10/20 dark frames. Export all the frames on Deep Sky Staker and let it do the magic.</p>
   
 
 
