@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">DSLR06</string>
+    <string name="app_name">DSLR</string>
     <string name="capture_button_text">O</string>
     <string name="zoom_plus">+</string>
     <string name="zoom_minus">-</string>
