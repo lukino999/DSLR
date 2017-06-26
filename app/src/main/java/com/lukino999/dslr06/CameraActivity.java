@@ -153,10 +153,7 @@ public class CameraActivity extends AppCompatActivity {
             log(" - - - - - - - - - - - something wrong opening the camera");
 
         }
-        log("------Camera parameters------------------------------------------------------");
 
-        log(c.getParameters().flatten().replace(";", "\n"));
-        log("-----------------------------------------------------------------------------");
 
         return c; // returns null if camera is unavailable
     }
@@ -275,6 +272,10 @@ public class CameraActivity extends AppCompatActivity {
         // Create an instance of Camera
         mCamera = getCameraInstance();
 
+        if (mCamera != null) {
+            mCameraParameters = mCamera.getParameters();
+        }
+
         // Create our Preview view and set it as the content of our activity.
         mPreview = new CameraPreview(this, mCamera);
 
@@ -335,11 +336,12 @@ public class CameraActivity extends AppCompatActivity {
                 // remove the listener as you only what this executed once
                 layout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
 
-                // set camera_preview aspect ratio
-                setPreviewAspectRatio();
 
                 // sets the user interface functionality
 //                setListeners();
+
+                // set camera_preview aspect ratio
+                setPreviewAspectRatio();
 
                 setControls();
 
@@ -348,46 +350,61 @@ public class CameraActivity extends AppCompatActivity {
 
     }
 
-    private void setPreviewAspectRatio() {
+
+
+    private void setPreviewAspectRatio(){
+
+        List<Camera.Size> availablePrevSizes =  mCameraParameters.getSupportedPreviewSizes();
+
+        // assuming that manufacturer wont allow preview size bigger than screen size
+        int prevSizeIndex = availablePrevSizes.size()-1;
+
+        int previewHeight;
+        short increment;
+
 
         /*
-        in order to set preview aspect ratio to be the
-        same as camera output format proportions
-        get the format proportions from camera params
-        */
+        Some manufacturers list previews from smaller to larger
+        Others list the other way around
+         */
+        if (availablePrevSizes.get(0).height > availablePrevSizes.get(prevSizeIndex).height){
+            increment = 1;
+            previewHeight = availablePrevSizes.get(0).height;
+            prevSizeIndex = 0;
+        }   else {
+            increment = -1;
+            previewHeight = availablePrevSizes.get(prevSizeIndex).height;
+        }
 
-        mCameraParameters = mCamera.getParameters();
+        // get picture aspect ratio
+        float pictureRatio = (float) mCameraParameters.getPictureSize().width /
+                (float) mCameraParameters.getPictureSize().height;
 
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        int height = displayMetrics.heightPixels;
 
-        float pictureAspectRatio;
 
-        Camera.Size pictureSize = mCameraParameters.getPictureSize();
-        log(pictureSize.width + " X " + pictureSize.height);
+        FrameLayout cameraPreview = (FrameLayout) findViewById(R.id.camera_preview);
+        ViewGroup.LayoutParams cameraPreviewParams = cameraPreview.getLayoutParams();
+        cameraPreviewParams.height = previewHeight;
+        cameraPreviewParams.width = (int) (previewHeight * pictureRatio);
+        cameraPreview.setLayoutParams(cameraPreviewParams);
 
-        Camera.Size previewSize = mCameraParameters.getPreviewSize();
+        // get preview aspect ratio
+        float previewRatio = (float) availablePrevSizes.get(prevSizeIndex).width /
+                (float) availablePrevSizes.get(prevSizeIndex).height;
 
-        pictureAspectRatio = (float) pictureSize.width / (float) pictureSize.height;
-        log("pictureAspectRatio: " + pictureAspectRatio);
+        // loop till find a preview size that matches picture's aspect ratio
+        while (previewRatio != pictureRatio) {
+            prevSizeIndex += increment;
+            previewRatio = (float) availablePrevSizes.get(prevSizeIndex).width /
+                    (float) availablePrevSizes.get(prevSizeIndex).height;
+        }
 
-        float previewAspectRatio = (float) previewSize.width / (float) previewSize.height;
-        log("previewAspectRatio: " + previewAspectRatio);
+        log("-------------------------------\n" +
+                "preview width: " + availablePrevSizes.get(prevSizeIndex).width
+                + "  preview height: " + availablePrevSizes.get(prevSizeIndex).height);
 
-        // now set the preview width
-        FrameLayout cameraPreviewLayout = (FrameLayout) findViewById(R.id.camera_preview);
-        int cameraPreviewHeight = height;
-        int cameraPreviewWidth = (int) (height * pictureAspectRatio);
-
-        log("camera_preview size: " + cameraPreviewWidth + " X " + cameraPreviewHeight);
-
-        ViewGroup.LayoutParams params = cameraPreviewLayout.getLayoutParams();
-        params.width = cameraPreviewWidth;
-        params.height = cameraPreviewHeight;
-        cameraPreviewLayout.setLayoutParams(params);
-
-        mCameraParameters.setPreviewSize(cameraPreviewWidth, cameraPreviewHeight);
+        // set aspect ratio
+        mCameraParameters.setPreviewSize(availablePrevSizes.get(prevSizeIndex).width, availablePrevSizes.get(prevSizeIndex).height);
         mCamera.setParameters(mCameraParameters);
 
     }
@@ -530,6 +547,11 @@ public class CameraActivity extends AppCompatActivity {
 
         initializePicturesLeftMenu();
 
+        log("------Camera parameters------------------------------------------------------");
+
+        log(mCameraParameters.flatten().replace(";", "\n"));
+        log("-----------------------------------------------------------------------------");
+
     }
 
     private void initializeMainMenu() {
@@ -541,8 +563,9 @@ public class CameraActivity extends AppCompatActivity {
         /*
         Populate the functionsArrayList with LABEL: currentValue
          */
+
         for (Map m : cameraFunctionsList.availableFuntions){
-            log(m.toString());
+
 
             functionsArrayList.add(m.get(cameraFunctionsList.LABEL).toString() + ": " +
             mCameraParameters.get(m.get(cameraFunctionsList.VALUE).toString()));

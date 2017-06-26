@@ -5,7 +5,7 @@ android {
     buildToolsVersion "25.0.2"
     defaultConfig {
         applicationId "com.lukino999.dslr06"
-        minSdkVersion 18
+        minSdkVersion 16
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
