@@ -33,7 +33,6 @@ public class MyAnimator extends AppCompatActivity {
         }
     };
 
-    MediaActionSound mediaActionSound = new MediaActionSound();
 
     // fadesIn the View v
     public void fadeIn(final View v){
@@ -115,9 +114,8 @@ public class MyAnimator extends AppCompatActivity {
 
     // temporaryTextView
     // fades out after textFieldFadeOutDelay ms
-    public long textFieldFadeOutDelay = 1000;
     boolean fadeOutHasBeenCalled = false;
-    public void tempTextView(final TextView v, final String text){
+    public void tempTextView(final TextView v, final String text, long textFieldFadeOutDelay){
 
         // remove any scheduled post
         tempTextViewHandler.removeCallbacks(run);

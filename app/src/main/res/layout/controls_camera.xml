@@ -11,19 +11,19 @@
         android:layout_height="match_parent"
         android:background="@color/menuBackgroud"
         android:choiceMode="singleChoice"
-        android:listSelector="@android:color/background_dark"
+        android:listSelector="@color/selectedItem"
         android:visibility="invisible" />
     <ListView
         android:id="@+id/list_view_values_menu"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_toRightOf="@id/list_view_main_menu"
         android:background="@color/menuBackgroud"
         android:choiceMode="singleChoice"
-        android:listSelector="@android:color/background_dark"
-        android:layout_marginLeft="5dp"
+        android:listSelector="@color/selectedItem"
         android:visibility="invisible"
+        android:layout_centerVertical="true"
+        android:layout_toRightOf="@id/list_view_main_menu"
+        android:layout_marginLeft="5dp"
         tools:ignore="RtlHardcoded">
     </ListView>
 
@@ -56,8 +56,9 @@
 
         <TextView
             android:id="@+id/text_view_zoom"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:layout_above="@+id/seekbar_zoom"
             android:layout_centerHorizontal="true"
             android:visibility="invisible"/>

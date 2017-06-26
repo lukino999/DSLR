@@ -12,7 +12,6 @@ import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -46,28 +45,22 @@ public class CameraActivity extends AppCompatActivity {
     public static final int MEDIA_TYPE_VIDEO = 2;
     private static final int MY_PERMISSIONS_REQUEST_CAMERA = 1001;
     private static final int MY_PERMISSIONS_WRITE_EXTERNAL_STORAGE = 1002;
-
     private static String appName;
-
     final CameraFunctionsList cameraFunctionsList = new CameraFunctionsList();
-
     // sets fullscreen declarations
     private final Handler mHideHandler = new Handler();
-
     MediaActionSound shutterClick =  new MediaActionSound();
-
     // this will be used to inflate an xml to its own View obj
     LayoutInflater controlInflater = null;
-
     boolean menuViewVisible = false;
-
     MyAnimator animator = new MyAnimator();
-
-    int focusAreaSize = 300;
-
-    FocusAreaDrawable focusAreaDrawable;
+    private int countDown = 3;
+    private int focusAreaSize = 300;
+    private TextView howManyPicturesLeftTxtView;
+    private FocusAreaDrawable focusAreaDrawable;
     private Rect focusAreaDrawableBounds;
     private Handler removeFocusHandler = new Handler();
+
     private Runnable removeFocusRect = new Runnable() {
         @Override
         public void run() {
@@ -75,7 +68,6 @@ public class CameraActivity extends AppCompatActivity {
             focusAreaDrawable.invalidate();
         }
     };
-
     Camera.AutoFocusCallback autoFocusCallback = new Camera.AutoFocusCallback() {
         @Override
         public void onAutoFocus(boolean success, Camera camera) {
@@ -91,10 +83,9 @@ public class CameraActivity extends AppCompatActivity {
         }
 
     };
-
-
-    private int countDown = 3;
-
+    private Camera.Parameters mCameraParameters;
+    private View whoIsUsingTheValueMenu;
+    private FrameLayout cameraPreview;
     private View mContentView;
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
@@ -116,8 +107,23 @@ public class CameraActivity extends AppCompatActivity {
 
     private Camera mCamera;
     private CameraPreview mPreview;
-    private boolean keepTakingPictures = false;
+    private boolean stillTakingPictures = false;
+    private Camera.ShutterCallback mShutterCallback = new Camera.ShutterCallback() {
+        @Override
+        public void onShutter() {
 
+            shutterClick.play(MediaActionSound.SHUTTER_CLICK);
+
+            animator.shutter(cameraPreview);
+        }
+    };
+    private RelativeLayout menuZoom;
+    private ListView mainMenu;
+    private ListView menuValuesListView;
+    private ListView howManyPicturesMenu;
+    private ImageButton buttonShowMenu;
+    private SeekBar seekBarZoom;
+    private TextView textViewZoom;
     private Camera.PictureCallback mPicture = new Camera.PictureCallback() {
 
         @Override
@@ -125,21 +131,9 @@ public class CameraActivity extends AppCompatActivity {
             mOnPictureTaken(data);
         }
     };
-
-    private Camera.ShutterCallback mShutterCallback = new Camera.ShutterCallback() {
-        @Override
-        public void onShutter() {
-
-            shutterClick.play(MediaActionSound.SHUTTER_CLICK);
-
-            FrameLayout frameShutter = (FrameLayout) findViewById(R.id.camera_preview);
-            animator.shutter(frameShutter);
-        }
-    };
-
-
-    private Camera.Parameters mCameraParameters;
-    private View whoIsUsingTheValueMenu;
+    private ImageButton buttonCapture;
+    private TextView textViewCentral;
+    private String[] availableValues = new String[0];
 
     /** A safe way to get an instance of the Camera object. */
     public static Camera getCameraInstance(){
@@ -157,7 +151,6 @@ public class CameraActivity extends AppCompatActivity {
 
         return c; // returns null if camera is unavailable
     }
-
 
     /** Create a File for saving an image or video */
     private static File getOutputMediaFile(int type){
@@ -205,14 +198,21 @@ public class CameraActivity extends AppCompatActivity {
         System.out.println(s);
     }
 
+    public static String format(float d) {
+        String s = String.valueOf(d);
+        return s.indexOf(".") < 0 ? s : s.replaceAll("0*$", "").replaceAll("\\.$", "");
+    }
+    // ---------------------------------------------------------------------------------------------
+
+
+    // ---------------------------------------------------------------------------------------------
+
     private void setFullscreen(){
         // makes fullscreen
         mContentView = findViewById(R.id.fullscreen_content);
         mHideHandler.post(mHidePart2Runnable);
         log("SetFullscreen");
     }
-
-
 
     private void mOnPictureTaken(byte[] data) {
 
@@ -233,19 +233,20 @@ public class CameraActivity extends AppCompatActivity {
         }
 
         log(" - - - - - - - - - - - Picture taken " + pictureFile.toString());
-        Toast.makeText(CameraActivity.this, "Saved as: " + pictureFile.toString(), Toast.LENGTH_SHORT).show();
-
+        animator.tempTextView(textViewZoom, "Saved as: " + pictureFile.toString(), 2000);
 
         mCamera.startPreview();
+
+
 
         /*
         keep taking pictures?
          */
-        if (keepTakingPictures) {
+        if (stillTakingPictures) {
 
             // get how many pictures left to take
-            TextView howManyPicturesLeft = (TextView) findViewById(R.id.text_view_how_many_pictures);
-            int picturesLeftToTake = Integer.parseInt(howManyPicturesLeft.getText().toString());
+
+            int picturesLeftToTake = Integer.parseInt(howManyPicturesLeftTxtView.getText().toString());
             log("Pictures left: " + picturesLeftToTake);
 
             if (picturesLeftToTake > 1){
@@ -253,25 +254,22 @@ public class CameraActivity extends AppCompatActivity {
                 takePicture();
                 picturesLeftToTake--;
                 //set pictureLeftToTake
-                howManyPicturesLeft.setText(String.valueOf(picturesLeftToTake));
+                howManyPicturesLeftTxtView.setText(String.valueOf(picturesLeftToTake));
             } else {
-                howManyPicturesLeft.setText("0");
-                animator.fadeOut(howManyPicturesLeft);
-                animator.fadeIn(findViewById(R.id.menu_zoom));
+                howManyPicturesLeftTxtView.setText("0");
+                animator.fadeOut(howManyPicturesLeftTxtView);
+                animator.fadeIn(menuZoom);
             }
         }
 
     }
-    // ---------------------------------------------------------------------------------------------
-
-
-    // ---------------------------------------------------------------------------------------------
 
     private void startPreview(){
 
         // Create an instance of Camera
         mCamera = getCameraInstance();
 
+        // set mCameraParameters once
         if (mCamera != null) {
             mCameraParameters = mCamera.getParameters();
         }
@@ -279,9 +277,9 @@ public class CameraActivity extends AppCompatActivity {
         // Create our Preview view and set it as the content of our activity.
         mPreview = new CameraPreview(this, mCamera);
 
-        FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
+        cameraPreview = (FrameLayout) findViewById(R.id.camera_preview);
 
-        preview.addView(mPreview);
+        cameraPreview.addView(mPreview);
 
 
 
@@ -324,17 +322,16 @@ public class CameraActivity extends AppCompatActivity {
         startPreview();
 
         // listens to layout to be ready before calling the setPreviewAspectRatio
-        final FrameLayout layout = (FrameLayout) findViewById(R.id.camera_preview);
 
         // add listener for camera_preview to be drawn, then call the setPreviewAspectRatio()
-        ViewTreeObserver vto = layout.getViewTreeObserver();
+        ViewTreeObserver vto = cameraPreview.getViewTreeObserver();
 
         vto.addOnGlobalLayoutListener (new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
 
                 // remove the listener as you only what this executed once
-                layout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                cameraPreview.getViewTreeObserver().removeGlobalOnLayoutListener(this);
 
 
                 // sets the user interface functionality
@@ -349,8 +346,6 @@ public class CameraActivity extends AppCompatActivity {
         });
 
     }
-
-
 
     private void setPreviewAspectRatio(){
 
@@ -381,8 +376,6 @@ public class CameraActivity extends AppCompatActivity {
                 (float) mCameraParameters.getPictureSize().height;
 
 
-
-        FrameLayout cameraPreview = (FrameLayout) findViewById(R.id.camera_preview);
         ViewGroup.LayoutParams cameraPreviewParams = cameraPreview.getLayoutParams();
         cameraPreviewParams.height = previewHeight;
         cameraPreviewParams.width = (int) (previewHeight * pictureRatio);
@@ -523,16 +516,22 @@ public class CameraActivity extends AppCompatActivity {
         startCamera();
     }
 
-
-
     // set the UI ----------------------------------------------------------------------------------
     private void setControls() {
 
-        mCameraParameters = mCamera.getParameters();
+        howManyPicturesLeftTxtView = (TextView) findViewById(R.id.text_view_how_many_pictures);
+        menuZoom = (RelativeLayout) findViewById(R.id.menu_zoom);
+        mainMenu = (ListView) findViewById(R.id.list_view_main_menu);
+        menuValuesListView = (ListView) findViewById(R.id.list_view_values_menu);
+        howManyPicturesMenu = (ListView) findViewById(R.id.list_view_how_many_pictures);
+        buttonShowMenu = (ImageButton) findViewById(R.id.button_show_menu);
+        seekBarZoom = (SeekBar) findViewById(R.id.seekbar_zoom);
+        textViewZoom = (TextView) findViewById(R.id.text_view_zoom);
+        textViewCentral = (TextView) findViewById(R.id.text_view_countdown);
+
 
         mCameraParameters.set(" jpeg-quality", "100");
         mCamera.setParameters(mCameraParameters);
-        log(" jpeg-quality: " + mCameraParameters.get(" jpeg-quality"));
 
 
         initializeButtonCapture();
@@ -551,13 +550,11 @@ public class CameraActivity extends AppCompatActivity {
 
         log(mCameraParameters.flatten().replace(";", "\n"));
         log("-----------------------------------------------------------------------------");
-
     }
 
     private void initializeMainMenu() {
 
 
-        final ListView mainMenu = (ListView) findViewById(R.id.list_view_main_menu);
         ArrayList<String> functionsArrayList = new ArrayList<>();
 
         /*
@@ -582,20 +579,18 @@ public class CameraActivity extends AppCompatActivity {
         mainMenu.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                log("mainMenu.setOnItemClickListener");
+                log("mainMenu: onItemClick");
                 updateValuesMenu(position, (TextView) view);
             }
         });
 
     }
 
-
-    private String[] availableValues = new String[0];
     private void updateValuesMenu(final int i, final TextView whoIsCalling){
 
         /*
-        Update menu with values returned by CameraParameters.get(keyAvailableValues)
-        If menu is already up, whoIsCalling tells whether to toggle off or update
+        Update menuZoom with values returned by CameraParameters.get(keyAvailableValues)
+        If menuZoom is already up, whoIsCalling tells whether to toggle off or update
 
         flagAvailableValues -> "-values": gets available values from cameraParameters
         flagAvailableValues -> "-supported": available values are "true" or "false"
@@ -604,7 +599,6 @@ public class CameraActivity extends AppCompatActivity {
         final String flagAvailableValues = cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.AVAILABLE_VALUES).toString();
         final String keyCurrentValue = cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.VALUE).toString();
         final String label = cameraFunctionsList.availableFuntions.get(i).get(cameraFunctionsList.LABEL).toString();
-        final ListView listView = (ListView) findViewById(R.id.list_view_values_menu);
         final String keyAvailableValues = keyCurrentValue + flagAvailableValues;
         final String[] boolValues = {"true", "false"};
 
@@ -615,14 +609,12 @@ public class CameraActivity extends AppCompatActivity {
             // ---------------------------------------------------------------------
             if (menuViewVisible && (whoIsUsingTheValueMenu == whoIsCalling)) {
                 // toggle OFF
-                log("Update menu:: toggle OFF");
-                animator.fadeOut(listView);
+                animator.fadeOut(menuValuesListView);
                 menuViewVisible = false;
                 whoIsUsingTheValueMenu = null;
                 setFullscreen();
             } else {
                 // toggle ON
-                log("Update menu:: toggle ON");
                 whoIsUsingTheValueMenu = whoIsCalling;
                 menuViewVisible = true;
 
@@ -651,23 +643,21 @@ public class CameraActivity extends AppCompatActivity {
                 log("currentValueString " + currentValueString + "   -   currentValueInt: " + currentValueIndex);
 
 
-                // wait for the listView to be ready before fadingIn and setting the listener
-                ViewTreeObserver vto = listView.getViewTreeObserver();
+                // wait for the menuValuesListView to be ready before fadingIn and setting the listener
+                ViewTreeObserver vto = menuValuesListView.getViewTreeObserver();
                 vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                     @Override
                     public void onGlobalLayout() {
                         // remove this listener
-                        listView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        menuValuesListView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
 
                         // show the menuView
-                        animator.fadeIn(listView);
+                        animator.fadeIn(menuValuesListView);
 
-                        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        menuValuesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                             @Override
                             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                                 log(" \nvaluesMenu.OnItemClick");
-                                view.getFocusables(position);
-                                view.setSelected(true);
                                 mCameraParameters.set(keyCurrentValue, availableValues[position]);
                                 mCamera.setParameters(mCameraParameters);
                                 setMenuItemLabel(whoIsCalling, i);
@@ -690,11 +680,11 @@ public class CameraActivity extends AppCompatActivity {
 
     private String[] getPossibleValues(String keyCurrentValue) {
         float max;
-        String maxString = mCamera.getParameters().get("max-" + keyCurrentValue);
+        String maxString = mCameraParameters.get("max-" + keyCurrentValue);
         float min;
-        String minString = mCamera.getParameters().get("min-" + keyCurrentValue);
+        String minString = mCameraParameters.get("min-" + keyCurrentValue);
         float step;
-        String stepString = mCamera.getParameters().get(keyCurrentValue + "-step");
+        String stepString = mCameraParameters.get(keyCurrentValue + "-step");
 
 
         if (maxString != null) {
@@ -736,11 +726,6 @@ public class CameraActivity extends AppCompatActivity {
         return possibleValues;
     }
 
-    public static String format(float d) {
-        String s = String.valueOf(d);
-        return s.indexOf(".") < 0 ? s : s.replaceAll("0*$", "").replaceAll("\\.$", "");
-    }
-
     private void checkForFurtherAction(String keyCurrentValue) {
         switch (keyCurrentValue){
             case "picture-size":    setPreviewAspectRatio();
@@ -748,8 +733,6 @@ public class CameraActivity extends AppCompatActivity {
     }
 
     private void initializePicturesLeftMenu() {
-        final ListView howManyPicturesMenu = (ListView) findViewById(R.id.list_view_how_many_pictures);
-        final TextView textViewHowMany = (TextView) findViewById(R.id.text_view_how_many_pictures);
         String[] howManyPicsMenuItems = {"RESET", "+100", "+10", "+1", "START"};
         ArrayList<String> howManyPicsItemsArrayList = new ArrayList<>(Arrays.asList(howManyPicsMenuItems));
         ArrayAdapter arrayAdapter = new ArrayAdapter(getApplicationContext(), android.R.layout.simple_list_item_1, howManyPicsItemsArrayList);
@@ -770,18 +753,18 @@ public class CameraActivity extends AppCompatActivity {
                         TextView textView = (TextView) view;
                         String command = textView.getText().toString();
                         if (command == "RESET") {
-                            textViewHowMany.setText("0");
+                            howManyPicturesLeftTxtView.setText("0");
                         } else if (command == "START") {
                             animator.fadeOut(howManyPicturesMenu);
                             initializeCameraPreviewAutofocus();
                             countDown();
                         } else {
-                            int howManyPicturesLeft = Integer.valueOf(textViewHowMany.getText().toString());
+                            int howManyPicturesLeft = Integer.valueOf(howManyPicturesLeftTxtView.getText().toString());
                             howManyPicturesLeft = howManyPicturesLeft + Integer.valueOf(textView.getText().toString());
                             if (howManyPicturesLeft < 0) {
                                 howManyPicturesLeft = 0;
                             }
-                            textViewHowMany.setText(String.valueOf(howManyPicturesLeft));
+                            howManyPicturesLeftTxtView.setText(String.valueOf(howManyPicturesLeft));
                         }
                     }
                 });
@@ -792,17 +775,14 @@ public class CameraActivity extends AppCompatActivity {
     }
 
     private void initializeButtonShowMenu() {
-        final FrameLayout cameraPreview = (FrameLayout) findViewById(R.id.camera_preview);
-        final ListView mainMenu = (ListView) findViewById(R.id.list_view_main_menu);
-        final RelativeLayout zoomMenu = (RelativeLayout) findViewById(R.id.menu_zoom);
-        final ImageButton buttonShowMenu = (ImageButton) findViewById(R.id.button_show_menu);
+
         buttonShowMenu.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // hide rightArrow and Zoom
                 animator.fadeOut(buttonShowMenu);
-                animator.fadeOut(zoomMenu);
-                // bring in main menu
+                animator.fadeOut(menuZoom);
+                // bring in main menuZoom
                 animator.fadeIn(mainMenu);
                 // change preview listener
                 changePreviewListener();
@@ -824,20 +804,16 @@ public class CameraActivity extends AppCompatActivity {
 
     private void removeMenus() {
 
-        animator.fadeOut(findViewById(R.id.list_view_values_menu));
-        animator.fadeOut(findViewById(R.id.list_view_main_menu));
-        animator.fadeIn(findViewById(R.id.menu_zoom));
-        animator.fadeIn(findViewById(R.id.button_show_menu));
+        animator.fadeOut(menuValuesListView);
+        animator.fadeOut(mainMenu);
+        animator.fadeIn(menuZoom);
+        animator.fadeIn(buttonShowMenu);
         initializeCameraPreviewAutofocus();
 
     }
 
     private void initializeZoom() {
 
-        final RelativeLayout menuZoom = (RelativeLayout) findViewById(R.id.menu_zoom);
-
-        final SeekBar seekBarZoom = (SeekBar) findViewById(R.id.seekbar_zoom);
-        final TextView textViewZoom = (TextView) findViewById(R.id.text_view_zoom);
         // get how many steps
         final List zoomRatiosList = mCameraParameters.getZoomRatios();
 
@@ -876,7 +852,7 @@ public class CameraActivity extends AppCompatActivity {
                         log("seekBar from code: " + progress);
                     }
                     float zoomRatio = Float.valueOf(zoomRatiosList.get(progress).toString()) / 100;
-                    animator.tempTextView(textViewZoom, "x " + String.valueOf(zoomRatio));
+                    animator.tempTextView(textViewZoom, "x " + String.valueOf(zoomRatio), 2000);
 
                 }
 
@@ -906,12 +882,12 @@ public class CameraActivity extends AppCompatActivity {
 
         shutterClick.load(MediaActionSound.SHUTTER_CLICK);
 
-        final ImageButton buttonCapture = (ImageButton) findViewById(R.id.button_capture);
+        buttonCapture = (ImageButton) findViewById(R.id.button_capture);
         buttonCapture.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        keepTakingPictures = false;
+                        stillTakingPictures = false;
                         takePicture();
                     }
                 }
@@ -922,17 +898,17 @@ public class CameraActivity extends AppCompatActivity {
             public boolean onLongClick(View v) {
                 log("OnLongClick");
                 //countDown();
-                animator.fadeOut(findViewById(R.id.menu_zoom));
-                animator.fadeOut(findViewById(R.id.list_view_values_menu));
-                animator.fadeOut(findViewById(R.id.list_view_main_menu));
-                animator.fadeIn(findViewById(R.id.button_show_menu));
-                animator.fadeIn(findViewById(R.id.list_view_how_many_pictures));
-                animator.fadeIn(findViewById(R.id.text_view_how_many_pictures));
-                findViewById(R.id.camera_preview).setOnTouchListener(new View.OnTouchListener() {
+                animator.fadeOut(menuZoom);
+                animator.fadeOut(menuValuesListView);
+                animator.fadeOut(mainMenu);
+                animator.fadeIn(buttonShowMenu);
+                animator.fadeIn(howManyPicturesMenu);
+                animator.fadeIn(howManyPicturesLeftTxtView);
+                cameraPreview.setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
-                        animator.fadeOut(findViewById(R.id.list_view_how_many_pictures));
-                        animator.fadeOut(findViewById(R.id.text_view_how_many_pictures));
+                        animator.fadeOut(howManyPicturesMenu);
+                        animator.fadeOut(howManyPicturesLeftTxtView);
                         removeMenus();
                         initializeCameraPreviewAutofocus();
                         return false;
@@ -953,7 +929,6 @@ public class CameraActivity extends AppCompatActivity {
         whoIsUsingTheValueMenu = null;
 
         // focus touching the preview
-        FrameLayout cameraPreview = (FrameLayout) findViewById(R.id.camera_preview);
         cameraPreview.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -1015,8 +990,6 @@ public class CameraActivity extends AppCompatActivity {
     private Rect getDrawableRectBounds(Rect cameraFocusRect) {
 
 
-        FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
-        RelativeLayout fullscreen = (RelativeLayout) findViewById(R.id.fullscreen_content);
 
         // Rect(int left, int top, int right, int bottom)
 
@@ -1025,13 +998,13 @@ public class CameraActivity extends AppCompatActivity {
         log("cameraFocusRect.right: " + cameraFocusRect.right);
         log("cameraFocusRect.bottom: " + cameraFocusRect.bottom);
 
-        log(" \npreview top: " + preview.getTop());
-        log("preview left: " + preview.getLeft());
+        log(" \npreview top: " + cameraPreview.getTop());
+        log("preview left: " + cameraPreview.getLeft());
 
-        int left = (int) (((cameraFocusRect.left + 1000d) / 2000d * preview.getWidth()) + preview.getLeft());
-        int top = (int) (((cameraFocusRect.top + 1000d) / 2000d * preview.getHeight()) + preview.getTop());
-        int right = (int) (((cameraFocusRect.right+ 1000d) / 2000d * preview.getWidth()) + preview.getLeft());
-        int bottom = (int) (((cameraFocusRect.bottom + 1000d) / 2000d * preview.getHeight()) + preview.getTop());
+        int left = (int) (((cameraFocusRect.left + 1000d) / 2000d * cameraPreview.getWidth()) + cameraPreview.getLeft());
+        int top = (int) (((cameraFocusRect.top + 1000d) / 2000d * cameraPreview.getHeight()) + cameraPreview.getTop());
+        int right = (int) (((cameraFocusRect.right+ 1000d) / 2000d * cameraPreview.getWidth()) + cameraPreview.getLeft());
+        int bottom = (int) (((cameraFocusRect.bottom + 1000d) / 2000d * cameraPreview.getHeight()) + cameraPreview.getTop());
 
 
         log(" \nleft: " + left);
@@ -1051,15 +1024,12 @@ public class CameraActivity extends AppCompatActivity {
 
     private void fillValuesMenu(ArrayList<String> arrayList){
 
-        ListView listView = (ListView) findViewById(R.id.list_view_values_menu);
         ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, arrayList);
-        listView.setAdapter(arrayAdapter);
+        menuValuesListView.setAdapter(arrayAdapter);
 
     }
 
     private void countDown() {
-
-        final TextView textViewCentral = (TextView) findViewById(R.id.text_view_countdown);
 
         final Handler h = new Handler();
         final Runnable r = new Runnable() {
@@ -1080,7 +1050,7 @@ public class CameraActivity extends AppCompatActivity {
                      */
 
                     // get sequence of pictures
-                    keepTakingPictures = true;
+                    stillTakingPictures = true;
                     takePicture();
 
                 }

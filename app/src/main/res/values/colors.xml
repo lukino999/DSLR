@@ -6,4 +6,5 @@
     <color name="menuBackgroud">#A000</color>
     <color name="colorCountdown">#C0808080</color>
     <color name="colorThumb">#ff808080</color>
+    <color name="selectedItem">#ff606060</color>
 </resources>
