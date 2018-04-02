@@ -20,7 +20,9 @@
 
 <h2>Known Issues</h2>
 <p>I am trying to implement RAW images format but:
-- phone keeps freezing when calling Camera.takePicture(mShutterCallback, mPictureRAW, null)
-- can't debug the Camera API as the phone runs 5.0.1 and 
-Android Studio's SDK is 5.0.2, which gives the  <i>"Source code doesnt match the bytecode"</i> message
-- no raw option available on emulator's camera.</p>
+<ul>
+	<li>phone keeps freezing when calling Camera.takePicture(mShutterCallback, mPictureRAW, null)</li>
+	<li>can't debug the Camera API as the phone runs 5.0.1 and 
+Android Studio's SDK is 5.0.2, which gives the  <i>"Source code doesnt match the bytecode"</i> message</li>
+<li>no raw format available on emulator's camera.</li>
+</p>
